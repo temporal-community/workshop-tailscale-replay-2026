@@ -13,7 +13,7 @@
 ║  │  temporal-ts-net        │   │  node_exporter (Docker)          │  ║
 ║  │  joins via tsnet        │   │  :9100/metrics                   │  ║
 ║  │  :7233 gRPC             │   │                                  │  ║
-║  │  :8233 UI               │   │  Tailscale (system client)       │  ║
+║  │  :8233 UI               │   │  Tailscale (Linux binary client) │  ║
 ║  └─────────────────────────┘   │  joins as metrics-server         │  ║
 ║                                └──────────────────────────────────┘  ║
 ║  ┌─────────────────────────┐                                         ║
