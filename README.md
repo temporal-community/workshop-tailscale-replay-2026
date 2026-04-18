@@ -39,8 +39,7 @@ Tailscale client alongside node_exporter in Docker.
 
 ## Workshop: Running the worker
 
-Everything except the worker is pre-provisioned by the workshop
-facilitators. You only need Go and an auth key.
+Everything except the worker is pre-provisioned. You only need Go and an auth key.
 
 ### Prerequisites
 
