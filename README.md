@@ -90,7 +90,7 @@ go test ./...
 
 ---
 
-## Infrastructure setup (facilitators)
+## Workshop persistent infrastructure setup
 
 ### temporal-dev VM
 
