@@ -6,27 +6,27 @@
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                         Tailscale Tailnet                            ║
 ║                                                                      ║
-║  ┌─────────────────────────┐   ┌──────────────────────────────────┐ ║
-║  │  temporal-dev           │   │  metrics-server                  │ ║
-║  │  Linux VM               │   │  Linux VM                        │ ║
-║  │                         │   │                                  │ ║
-║  │  temporal-ts-net        │   │  node_exporter (Docker)          │ ║
-║  │  joins via tsnet        │   │  :9100/metrics                   │ ║
-║  │  :7233 gRPC             │   │                                  │ ║
-║  │  :8233 UI               │   │  Tailscale (system client)       │ ║
-║  └─────────────────────────┘   │  joins as metrics-server         │ ║
-║                                └──────────────────────────────────┘ ║
-║  ┌─────────────────────────┐                                        ║
-║  │  http://ai              │                                        ║
-║  │  Aperture (Claude API)  │                                        ║
-║  └─────────────────────────┘                                        ║
+║  ┌─────────────────────────┐   ┌──────────────────────────────────┐  ║
+║  │  temporal-dev           │   │  metrics-server                  │  ║
+║  │  Linux VM               │   │  Linux VM                        │  ║
+║  │                         │   │                                  │  ║
+║  │  temporal-ts-net        │   │  node_exporter (Docker)          │  ║
+║  │  joins via tsnet        │   │  :9100/metrics                   │  ║
+║  │  :7233 gRPC             │   │                                  │  ║
+║  │  :8233 UI               │   │  Tailscale (system client)       │  ║
+║  └─────────────────────────┘   │  joins as metrics-server         │  ║
+║                                └──────────────────────────────────┘  ║
+║  ┌─────────────────────────┐                                         ║
+║  │  http://ai              │                                         ║
+║  │  Aperture (Claude API)  │                                         ║
+║  └─────────────────────────┘                                         ║
 ║                                                                      ║
-║  ┌─────────────────────────────────────────────────────────────┐    ║
-║  │  lab-worker  ←  YOU RUN THIS                                │    ║
-║  │  joins tailnet via tsnet (no Tailscale install required)    │    ║
-║  │  fetches metrics-server:9100 → asks Aperture → records in  │    ║
-║  │  Temporal workflow every minute                             │    ║
-║  └─────────────────────────────────────────────────────────────┘    ║
+║  ┌─────────────────────────────────────────────────────────────┐     ║
+║  │  lab-worker  ←  YOU RUN THIS                                │     ║
+║  │  joins tailnet via tsnet (no Tailscale install required)    │     ║
+║  │  fetches metrics-server:9100 → asks Aperture → records in   │     ║
+║  │  Temporal workflow every minute                             │     ║
+║  └─────────────────────────────────────────────────────────────┘     ║
 ╚══════════════════════════════════════════════════════════════════════╝
 ```
 
