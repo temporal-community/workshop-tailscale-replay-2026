@@ -205,3 +205,17 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Go
+/bin/
+*.exe
+*.test
+*.out
+
+# Tailscale tsnet state (contains auth keys / node private keys)
+/lab-worker/
+**/lab-worker/
+
+# Auth keys / secrets
+*.env
+tskey-*
