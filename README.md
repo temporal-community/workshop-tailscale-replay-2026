@@ -100,9 +100,10 @@ as `temporal-dev` via [temporal-ts-net](https://github.com/temporal-community/te
 **Install Go 1.26+**
 
 ```shell
+# Use linux-arm64 if on ARM
 wget https://go.dev/dl/go1.26.linux-amd64.tar.gz
 tar -C /usr/local -xzf go1.26.linux-amd64.tar.gz
-echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc && source ~/.bashrc
+echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.bashrc && source ~/.bashrc
 ```
 
 **Install the Temporal CLI**
