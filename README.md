@@ -95,7 +95,7 @@ go test ./...
 ### temporal-dev VM
 
 This VM runs `temporal server start-dev` and exposes it on the tailnet
-as `temporal-dev` via [temporal-ts-net](https://github.com/kartikb-tailscale/temporal-ts-net).
+as `temporal-dev` via [temporal-ts-net](https://github.com/temporal-community/temporal-ts-net).
 
 **Install Go 1.26+**
 
@@ -115,7 +115,7 @@ echo 'export PATH=$PATH:$HOME/.temporalio/bin' >> ~/.bashrc && source ~/.bashrc
 **Build the temporal-ts-net extension**
 
 ```shell
-git clone https://github.com/kartikb-tailscale/temporal-ts-net
+git clone https://github.com/temporal-community/temporal-ts-net
 cd temporal-ts-net
 go install ./cmd/temporal-ts_net
 cd ..
@@ -205,7 +205,7 @@ one for `lab-worker`. Generate ephemeral keys in the
 brew install temporal
 
 # temporal-ts-net extension
-git clone https://github.com/kartikb-tailscale/temporal-ts-net
+git clone https://github.com/temporal-community/temporal-ts-net
 cd temporal-ts-net
 go install ./cmd/temporal-ts_net
 cd ..
