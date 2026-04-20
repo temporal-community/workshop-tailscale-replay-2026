@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+
+# Stretch goal — always passes. This is a take-home challenge.
+echo "This is a stretch goal challenge. Great job getting here!"

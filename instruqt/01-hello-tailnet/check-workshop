@@ -1,0 +1,34 @@
+#!/bin/bash
+set -euo pipefail
+
+# Verify the attendee completed the challenge:
+# 1. temporal.toml exists with tailnet profile
+# 2. A geo-ip workflow was executed
+
+source /root/.bashrc
+
+# Check temporal.toml was created
+if [ ! -f /root/.config/temporalio/temporal.toml ]; then
+    fail-message "temporal.toml not found. Copy temporal.toml.example to ~/.config/temporalio/temporal.toml"
+    exit 1
+fi
+
+# Check it has the tailnet profile
+if ! grep -q "temporal-dev:7233" /root/.config/temporalio/temporal.toml; then
+    fail-message "temporal.toml doesn't have the tailnet profile with address temporal-dev:7233"
+    exit 1
+fi
+
+# Check a geo-ip workflow ran
+WORKSHOP_USER_ID=$(hostname | tr '[:upper:]' '[:lower:]')
+WORKFLOW_COUNT=$(temporal workflow list \
+    --address temporal-dev:7233 \
+    --query "WorkflowId STARTS_WITH '${WORKSHOP_USER_ID}-geo-ip'" \
+    --limit 1 2>/dev/null | grep -c "geo-ip" || true)
+
+if [ "$WORKFLOW_COUNT" -eq 0 ]; then
+    fail-message "No geo-ip workflow found for your user ID (${WORKSHOP_USER_ID}). Did you run starter.py with your USER_ID in the workflow ID?"
+    exit 1
+fi
+
+echo "Challenge complete! Your geo-ip workflow ran successfully on the tailnet."

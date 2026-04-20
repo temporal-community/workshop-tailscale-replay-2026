@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+# Light check — verify attendee ran tailscale status
+# In a workshop setting, this is mostly instructor-paced,
+# so we just verify Tailscale is connected.
+
+if ! tailscale status > /dev/null 2>&1; then
+    fail-message "Tailscale is not connected. Run: tailscale up"
+    exit 1
+fi
+
+echo "Tailscale is connected. Challenge complete!"

@@ -1,0 +1,25 @@
+#!/bin/bash
+set -euxo pipefail
+
+source /root/.bashrc
+cd /root/workshop
+
+# Create the temporal.toml config
+mkdir -p /root/.config/temporalio
+cp temporal.toml.example /root/.config/temporalio/temporal.toml
+
+# Copy the solution files
+cp exercises/01_hello_tailnet/solution/*.py exercises/01_hello_tailnet/practice/
+
+# Run the worker in the background
+cd exercises/01_hello_tailnet/practice
+uv run worker.py &
+WORKER_PID=$!
+sleep 3
+
+# Run the starter
+uv run starter.py
+
+# Stop the worker
+kill $WORKER_PID 2>/dev/null || true
+wait $WORKER_PID 2>/dev/null || true

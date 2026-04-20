@@ -1,0 +1,29 @@
+[project]
+name = "workshop-tailscale-replay-2026"
+version = "0.1.0"
+description = "Securing AI Applications with Tailscale and Temporal — Replay 2026 Workshop"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "temporalio>=1.17.0,<2",
+    "openai>=1.60.0,<2",
+    "httpx>=0.27.0",
+    "requests>=2.32.0",
+    "pydantic>=2.10.0,<3",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.13.0",
+    "pytest>=8.3.0",
+    "ruff>=0.8.0",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.mypy]
+strict = true

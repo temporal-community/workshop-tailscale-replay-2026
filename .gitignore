@@ -205,3 +205,15 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Go
+exercises/04_go_agent/practice/go-agent
+exercises/04_go_agent/solution/go-agent
+
+# Node (Slidev)
+node_modules/
+slides/node_modules/
+
+# Workshop
+commit-msg.md
+.ai-sessions/

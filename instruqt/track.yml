@@ -1,0 +1,21 @@
+slug: securing-ai-apps-tailscale-temporal
+title: Securing AI Applications with Tailscale and Temporal
+teaser: Build a durable AI agent secured by Tailscale networking and Aperture API gateway
+description: |-
+  A hands-on workshop where you'll connect to a shared Temporal dev server
+  through a Tailscale network, explore the tailnet, and build a durable AI
+  weather agent with LLM calls routed through Aperture for rate limiting
+  and key management.
+owner: temporal-community
+developers:
+  - mason.egger@temporal.io
+timelimit: 5400
+idle_timeout: 600
+lab_config:
+  theme:
+    name: modern-dark
+  override_challenge_layout: false
+  default_layout: AssignmentLeft
+  feedback_recap_enabled: true
+  feedback_tab_enabled: true
+  extend_ttl: 900

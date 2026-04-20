@@ -1,0 +1,29 @@
+#!/bin/bash
+set -euxo pipefail
+
+source /root/.bashrc
+cd /root/workshop
+
+# Copy solution files
+cp exercises/03_weather_agent/solution/*.py exercises/03_weather_agent/practice/
+
+# Run the tool-calling workflow
+cd exercises/03_weather_agent/practice
+uv run worker.py &
+WORKER_PID=$!
+sleep 3
+
+uv run starter.py "What are the weather alerts in California?"
+
+kill $WORKER_PID 2>/dev/null || true
+wait $WORKER_PID 2>/dev/null || true
+
+# Run the agent workflow
+uv run worker.py --agent &
+WORKER_PID=$!
+sleep 3
+
+uv run starter.py --agent "What's the weather like where I am right now?"
+
+kill $WORKER_PID 2>/dev/null || true
+wait $WORKER_PID 2>/dev/null || true

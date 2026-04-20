@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euxo pipefail
+
+# Run the exploration commands
+tailscale status
+tailscale ping temporal-dev
+tailscale whois $(tailscale ip -4)
+nc -zv temporal-dev 7233
+curl -s -o /dev/null -w "%{http_code}" http://temporal-dev:8233
