@@ -97,15 +97,6 @@ go test ./...
 This VM runs `temporal server start-dev` and exposes it on the tailnet
 as `temporal-dev` via [temporal-ts-net](https://github.com/temporal-community/temporal-ts-net).
 
-**Install Go 1.26+**
-
-```shell
-# Use linux-arm64 if on ARM
-wget https://go.dev/dl/go1.26.linux-amd64.tar.gz
-tar -C /usr/local -xzf go1.26.linux-amd64.tar.gz
-echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.bashrc && source ~/.bashrc
-```
-
 **Install the Temporal CLI**
 
 ```shell
@@ -113,13 +104,10 @@ curl -sSf https://temporal.download/cli.sh | sh
 echo 'export PATH=$PATH:$HOME/.temporalio/bin' >> ~/.bashrc && source ~/.bashrc
 ```
 
-**Build the temporal-ts-net extension**
+**Install the temporal-ts-net extension**
 
 ```shell
-git clone https://github.com/temporal-community/temporal-ts-net
-cd temporal-ts-net
-go install ./cmd/temporal-ts_net
-cd ..
+curl -sSfL https://raw.githubusercontent.com/temporal-community/temporal-ts-net/main/install.sh | sh
 ```
 
 Verify the extension is found:
@@ -206,10 +194,7 @@ one for `lab-worker`. Generate ephemeral keys in the
 brew install temporal
 
 # temporal-ts-net extension
-git clone https://github.com/temporal-community/temporal-ts-net
-cd temporal-ts-net
-go install ./cmd/temporal-ts_net
-cd ..
+curl -sSfL https://raw.githubusercontent.com/temporal-community/temporal-ts-net/main/install.sh | sh
 
 # Verify
 temporal help --all | grep ts-net
