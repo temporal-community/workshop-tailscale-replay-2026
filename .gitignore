@@ -227,3 +227,7 @@ slide-*.jpeg
 
 # Reference material used to design the theme (source PPTX, logo, bg PNGs)
 reference/
+
+# MkDocs build output
+site/
+.mkdocs_cache/

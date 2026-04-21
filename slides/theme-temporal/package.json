@@ -1,7 +1,7 @@
 {
   "name": "slidev-theme-temporal",
   "version": "0.1.0",
-  "description": "Slidev theme matching Temporal's brand — Inter ExtraLight/Light, mint+purple palette, grid + starfield backgrounds.",
+  "description": "Slidev theme matching Temporal's brand. Inter ExtraLight/Light, mint and purple palette, grid and starfield backgrounds.",
   "keywords": ["slidev-theme", "slidev", "temporal"],
   "private": true,
   "engines": {

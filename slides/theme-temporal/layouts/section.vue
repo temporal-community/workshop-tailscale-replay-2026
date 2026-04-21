@@ -1,5 +1,5 @@
 <!--
-  Section divider — one big ExtraLight phrase centered on the purple-planet bg.
+  Section divider. One big ExtraLight phrase centered on the purple-planet bg.
   Use for "Exercise N", "Architecture", "Wrap-Up"-style breaks.
 -->
 <template>

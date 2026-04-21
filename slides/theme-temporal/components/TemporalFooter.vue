@@ -1,5 +1,5 @@
 <!--
-  Footer row shown on content layouts — workshop title left, slide index right.
+  Footer row shown on content layouts: workshop title left, slide index right.
   Positioned via flex (margin-top: auto) rather than absolute so it never overlaps.
 -->
 <script setup lang="ts">
@@ -14,7 +14,7 @@ const pageLabel = computed(() =>
 
 <template>
   <div class="temporal-footer">
-    <span>Replay 2026 · Tailscale × Temporal</span>
+    <span>Replay 2026 | Tailscale + Temporal</span>
     <span class="page">{{ pageLabel }}</span>
   </div>
 </template>

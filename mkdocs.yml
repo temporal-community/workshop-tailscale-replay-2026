@@ -1,0 +1,97 @@
+site_name: Securing AI with Tailscale and Temporal
+site_description: Community guide for running the Replay 2026 Tailscale + Temporal workshop
+site_author: Temporal Community
+site_url: https://temporal-community.github.io/workshop-tailscale-replay-2026/
+repo_url: https://github.com/temporal-community/workshop-tailscale-replay-2026
+repo_name: temporal-community/workshop-tailscale-replay-2026
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+extra_css:
+  - stylesheets/extra.css
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - toc.follow
+    - content.code.copy
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+
+copyright: "(c) Temporal Community | Tailscale + Temporal Workshop"
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - search
+
+nav:
+  - Overview:
+      - Home: index.md
+      - Workshop overview: workshop-overview.md
+      - Architecture: architecture.md
+  - Try it locally: try-it-locally.md
+  - Teach the workshop:
+      - With Instruqt: run-with-instruqt.md
+      - Without Instruqt: run-without-instruqt.md
+  - Infrastructure:
+      - Persistent setup: infrastructure.md
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/temporal-community/workshop-tailscale-replay-2026
+    - icon: fontawesome/brands/x-twitter
+      link: https://twitter.com/temporalio

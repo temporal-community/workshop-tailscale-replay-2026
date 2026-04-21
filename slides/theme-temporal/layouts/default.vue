@@ -1,5 +1,5 @@
 <!--
-  Default content layout — subtle perspective-grid background, Temporal footer.
+  Default content layout. Subtle perspective-grid background, Temporal footer.
   Flex column so the footer is always pinned to the bottom of the slide canvas.
 -->
 <script setup lang="ts">

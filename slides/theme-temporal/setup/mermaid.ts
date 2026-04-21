@@ -1,7 +1,7 @@
 // Default Mermaid config for the Temporal Slidev theme.
-// Dark base with Temporal palette overrides — mint borders, lavender edges,
+// Dark base with Temporal palette overrides: mint borders, lavender edges,
 // white text on deep-slate nodes.
-// (Plain default export — Slidev calls it to get the config.)
+// (Plain default export. Slidev calls it to get the config.)
 
 export default () => ({
   theme: 'base',

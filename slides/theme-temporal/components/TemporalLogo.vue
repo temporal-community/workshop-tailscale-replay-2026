@@ -1,5 +1,5 @@
 <!--
-  Temporal "plus" mark — inline SVG, inherits color via currentColor
+  Temporal "plus" mark. Inline SVG, inherits color via currentColor
   so layouts can tint it with CSS (default: Temporal mint green).
 -->
 <template>

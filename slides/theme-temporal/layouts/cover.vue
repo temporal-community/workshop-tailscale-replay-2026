@@ -1,5 +1,5 @@
 <!--
-  Cover / title layout — teal-planet background, large hero title, speaker block.
+  Cover / title layout. Teal-planet background, large hero title, speaker block.
   Designed for slide 1 and workshop-level opening slides.
 -->
 <script setup lang="ts">

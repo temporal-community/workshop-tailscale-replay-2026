@@ -22,8 +22,8 @@ layout: cover
 
 <br>
 
-**Mason Egger** · Temporal<br>
-**Kartik Bharath** · Tailscale
+**Mason Egger**, Temporal<br>
+**Kartik Bharath**, Tailscale
 
 <!--
 Welcome everyone! Over the next 90 minutes you'll build and run a durable AI agent
@@ -52,7 +52,7 @@ educational content for the Temporal ecosystem.
 *[Kartik bio]*
 
 <!--
-Quick intros — we'll keep it brief since we have a lot to build today.
+Quick intros. We'll keep it brief since we have a lot to build today.
 -->
 
 ---
@@ -63,10 +63,10 @@ Quick intros — we'll keep it brief since we have a lot to build today.
 
 A **durable AI weather agent** that:
 
-- 🔄 Uses **Temporal** to orchestrate an agentic tool-calling loop
-- 🔒 Runs on a **Tailscale** private network — no public internet exposure
-- 🚪 Routes all LLM calls through **Aperture** for rate limiting and key management
-- 🌍 Works across everyone's machines — all hitting one shared Temporal server
+- Uses **Temporal** to orchestrate an agentic tool-calling loop
+- Runs on a **Tailscale** private network - no public internet exposure
+- Routes all LLM calls through **Aperture** for rate limiting and key management
+- Works across everyone's machines - all hitting one shared Temporal server
 
 <br>
 
@@ -80,10 +80,10 @@ AI applications in production need more than just "call the LLM":
 
 <v-clicks>
 
-- **Durability** — What happens when your agent crashes mid-reasoning?
-- **Networking** — How do distributed workers reach your infrastructure securely?
-- **API Security** — How do you share expensive API keys without exposing them?
-- **Rate Limiting** — How do you prevent one user from burning your entire budget?
+- **Durability** - What happens when your agent crashes mid-reasoning?
+- **Networking** - How do distributed workers reach your infrastructure securely?
+- **API Security** - How do you share expensive API keys without exposing them?
+- **Rate Limiting** - How do you prevent one user from burning your entire budget?
 
 </v-clicks>
 
@@ -123,9 +123,9 @@ flowchart LR
 
 <v-clicks>
 
-- **Tailscale** — encrypted mesh network, zero config
-- **Aperture** — API gateway with identity-based rate limiting
-- **temporal-ts-net** — Temporal dev server exposed on the tailnet
+- **Tailscale** - encrypted mesh network, zero config
+- **Aperture** - API gateway with identity-based rate limiting
+- **temporal-ts-net** - Temporal dev server exposed on the tailnet
 
 </v-clicks>
 
@@ -135,10 +135,10 @@ flowchart LR
 
 <v-clicks>
 
-- **Mesh VPN** built on WireGuard — every device connects directly
-- **Zero config** — no firewall rules, no port forwarding, no VPN concentrators
-- **Identity-based** — every connection knows who's on the other end
-- **Tailnet** — your private network of devices
+- **Mesh VPN** built on WireGuard - every device connects directly
+- **Zero config** - no firewall rules, no port forwarding, no VPN concentrators
+- **Identity-based** - every connection knows who's on the other end
+- **Tailnet** - your private network of devices
 
 </v-clicks>
 
@@ -146,7 +146,7 @@ flowchart LR
 
 <v-click>
 
-Your Instruqt VM is already connected. The shared Temporal server is just `temporal-dev:7233` — as if it were on your local network.
+Your Instruqt VM is already connected. The shared Temporal server is just `temporal-dev:7233`, as if it were on your local network.
 
 </v-click>
 
@@ -157,9 +157,9 @@ Your Instruqt VM is already connected. The shared Temporal server is just `tempo
 <v-clicks>
 
 - **API gateway** that sits between your code and external APIs
-- **Shared key management** — one OpenAI key, many users, nobody sees the key
-- **Identity-aware** — uses your Tailscale identity, no extra auth tokens
-- **Rate limiting** — per-user quotas so no one burns the whole budget
+- **Shared key management** - one OpenAI key, many users, nobody sees the key
+- **Identity-aware** - uses your Tailscale identity, no extra auth tokens
+- **Rate limiting** - per-user quotas so no one burns the whole budget
 
 </v-clicks>
 
@@ -186,10 +186,10 @@ temporal ts-net \
 
 <v-clicks>
 
-- **Temporal CLI extension** — runs `temporal server start-dev` and proxies it onto the tailnet
-- **No public exposure** — the server is only reachable via Tailscale
-- **Supports gRPC + Web UI** — `temporal-dev:7233` and `temporal-dev:8233`
-- **Built with tsnet** — Go library for embedding Tailscale in applications
+- **Temporal CLI extension** - runs `temporal server start-dev` and proxies it onto the tailnet
+- **No public exposure** - the server is only reachable via Tailscale
+- **Supports gRPC + Web UI** - `temporal-dev:7233` and `temporal-dev:8233`
+- **Built with tsnet** - Go library for embedding Tailscale in applications
 
 </v-clicks>
 
@@ -206,17 +206,17 @@ layout: section
 <br>
 
 ### Goal
-Prove the tailnet works — run a workflow on the shared Temporal server.
+Prove the tailnet works. Run a workflow on the shared Temporal server.
 
 <br>
 
 ### Steps
 
-1. **Create `temporal.toml`** — configure the `tailnet` profile
+1. **Create `temporal.toml`** - configure the `tailnet` profile
 2. **Add your user ID** to the workflow ID
-3. **Start a worker** → it connects to `temporal-dev:7233`
-4. **Run the workflow** → get your IP and geolocation
-5. **Open the Temporal UI** → see your workflow alongside everyone else's
+3. **Start a worker** -> it connects to `temporal-dev:7233`
+4. **Run the workflow** -> get your IP and geolocation
+5. **Open the Temporal UI** -> see your workflow alongside everyone else's
 
 ---
 
@@ -315,8 +315,8 @@ tailscale whois $(tailscale ip -4)   # Your identity
 <v-clicks>
 
 - Your VM, the Temporal server, Aperture, and every other attendee
-- Direct WireGuard connections — no relay servers
-- Your identity is automatic — Aperture uses it for rate limiting
+- Direct WireGuard connections - no relay servers
+- Your identity is automatic - Aperture uses it for rate limiting
 
 </v-clicks>
 
@@ -333,7 +333,7 @@ sequenceDiagram
   participant AP as Aperture
   participant OAI as OpenAI
   VM->>AP: POST /v1/responses<br/>(no API key needed)
-  Note over AP: ✓ Identity: your-vm<br/>✓ Rate: 3 / 10 requests
+  Note over AP: Identity: your-vm<br/>Rate: 3 / 10 requests
   AP->>OAI: POST /v1/responses<br/>Authorization: Bearer sk-real-openai-key
   OAI-->>AP: response
   AP-->>VM: response
@@ -365,7 +365,7 @@ A single LLM decision: should I use a tool?
 flowchart TD
   U["User: 'Weather alerts in California?'"]
   LLM["LLM via Aperture"]
-  A["Temporal Activity<br/>get_weather_alerts('CA')<br/>→ calls NWS API"]
+  A["Temporal Activity<br/>get_weather_alerts('CA')<br/>calls NWS API"]
   R["'There are 3 active alerts<br/>in California...'"]
   U --> LLM
   LLM -->|decides to call tool| A
@@ -388,7 +388,7 @@ The LLM reasons through **multiple steps** autonomously:
 ```mermaid {scale: 0.7}
 flowchart TD
   U["User: 'What's the weather where I am?'"]
-  subgraph Loop["Agentic Loop · repeats until LLM is done"]
+  subgraph Loop["Agentic Loop, repeats until LLM is done"]
     direction LR
     P[LLM picks a tool] --> E[Execute Activity]
     E --> F[Feed result back to LLM]
@@ -400,7 +400,7 @@ flowchart TD
 
 <v-click>
 
-`get_ip_address` → `get_location_info` → `get_weather_alerts` → respond
+`get_ip_address` -> `get_location_info` -> `get_weather_alerts` -> respond
 
 </v-click>
 
@@ -410,10 +410,10 @@ flowchart TD
 
 <v-clicks>
 
-- **Each tool call is an Activity** — retried automatically on failure
-- **The loop is a Workflow** — survives worker crashes, resumes from last completed step
-- **Dynamic Activities** — the LLM picks the tool name, Temporal executes it
-- **Durable state** — the entire conversation history is preserved
+- **Each tool call is an Activity** - retried automatically on failure
+- **The loop is a Workflow** - survives worker crashes, resumes from last completed step
+- **Dynamic Activities** - the LLM picks the tool name, Temporal executes it
+- **Durable state** - the entire conversation history is preserved
 
 </v-clicks>
 
@@ -422,9 +422,9 @@ flowchart TD
 <v-click>
 
 ```python
-# The LLM chose "get_ip_address" — Temporal runs it
+# The LLM chose "get_ip_address", Temporal runs it
 tool_result = await workflow.execute_activity(
-    item.name,  # dynamic — chosen by the LLM
+    item.name,  # dynamic, chosen by the LLM
     args,
     start_to_close_timeout=timedelta(seconds=30),
 )
@@ -443,7 +443,7 @@ Every `create` activity call goes through Aperture:
 async def create(request: OpenAIResponsesRequest) -> Response:
     client = AsyncOpenAI(
         max_retries=0,
-        base_url=os.getenv("OPENAI_BASE_URL"),  # ← Aperture endpoint
+        base_url=os.getenv("OPENAI_BASE_URL"),  # Aperture endpoint
     )
     return await client.responses.create(
         model=request.model,
@@ -455,7 +455,7 @@ async def create(request: OpenAIResponsesRequest) -> Response:
 
 <v-click>
 
-The tool execution activities (weather, IP, location) call **free public APIs** directly — only the LLM calls need Aperture.
+The tool execution activities (weather, IP, location) call **free public APIs** directly. Only the LLM calls need Aperture.
 
 </v-click>
 
@@ -471,9 +471,9 @@ layout: section
 
 <br>
 
-### TODO 1 — Route LLM calls through Aperture
+### TODO 1 - Route LLM calls through Aperture
 
-`activities.py` — add `base_url` to the OpenAI client:
+`activities.py` - add `base_url` to the OpenAI client:
 
 ```python
 client = AsyncOpenAI(
@@ -497,17 +497,17 @@ uv run starter.py "Weather alerts in California?"  # Terminal 2
 
 <br>
 
-### TODO 2 — Turn on the loop
+### TODO 2 - Turn on the loop
 
-`agent_workflow.py` — change `False` to `True`:
+`agent_workflow.py` - change `False` to `True`:
 
 ```python
 while True:  # was: while False
 ```
 
-### TODO 3 — Execute the dynamic activity
+### TODO 3 - Execute the dynamic activity
 
-Same file — wire up the tool execution:
+Same file - wire up the tool execution:
 
 ```python
 tool_result = await workflow.execute_activity(
@@ -524,10 +524,10 @@ tool_result = await workflow.execute_activity(
 <br>
 
 ```bash
-# Terminal 1 — start the agent worker
+# Terminal 1 - start the agent worker
 uv run worker.py --agent
 
-# Terminal 2 — ask a question
+# Terminal 2 - ask a question
 uv run starter.py --agent "What's the weather like where I am?"
 ```
 
@@ -535,9 +535,9 @@ uv run starter.py --agent "What's the weather like where I am?"
 
 ### What to watch for
 
-- **Worker logs** — see the LLM chain: `get_ip_address` → `get_location_info` → `get_weather_alerts`
-- **Temporal UI** — each tool call appears as a separate activity in the workflow history
-- **The response** — a natural language answer with your local weather
+- **Worker logs** - see the LLM chain: `get_ip_address` -> `get_location_info` -> `get_weather_alerts`
+- **Temporal UI** - each tool call appears as a separate activity in the workflow history
+- **The response** - a natural language answer with your local weather
 
 ---
 layout: exercise
@@ -572,9 +572,9 @@ uv run starter.py --agent "What's the weather like where I am?"
 
 <v-clicks>
 
-- Watch the Aperture dashboard — per-user rate limits in action
-- Some requests get throttled → Temporal **retries** the activity automatically
-- Nobody's workflow fails — durability meets rate limiting
+- Watch the Aperture dashboard - per-user rate limits in action
+- Some requests get throttled -> Temporal **retries** the activity automatically
+- Nobody's workflow fails. Durability meets rate limiting.
 
 </v-clicks>
 
@@ -609,7 +609,7 @@ for {
 <v-clicks>
 
 - **6 lines** to put any TCP service on a Tailscale network
-- Built as a **Temporal CLI extension** — `temporal ts-net`
+- Built as a **Temporal CLI extension** - `temporal ts-net`
 - Supports rate limiting, max connections, idle timeouts
 - Open source: [github.com/temporal-community/temporal-ts-net](https://github.com/temporal-community/temporal-ts-net)
 
@@ -619,7 +619,7 @@ for {
 
 # Go Agent Preview
 
-**Exercise 4** — same weather agent, in Go. Take-home stretch goal.
+**Exercise 4.** Same weather agent, in Go. Take-home stretch goal.
 
 ```go
 func AgentWorkflow(ctx workflow.Context, input string) (string, error) {
@@ -676,7 +676,7 @@ Just a config file and a tailnet.
 <v-clicks>
 
 ### 1. Environment Configuration
-Use `temporal.toml` profiles — not hardcoded addresses. Switch between local, staging, and production with one env var.
+Use `temporal.toml` profiles, not hardcoded addresses. Switch between local, staging, and production with one env var.
 
 ### 2. Aperture as API Gateway
 Put expensive API keys behind a gateway with identity-based rate limiting. Your developers never see the key.
@@ -708,10 +708,10 @@ layout: end
 
 # Questions?
 
-**Mason Egger** · mason.egger@temporal.io
+**Mason Egger**, mason.egger@temporal.io
 
-**Kartik Bharath** · *[email]*
+**Kartik Bharath**, *[email]*
 
 <br>
 
-Exercise 4 (Go Agent) is a take-home stretch goal — the files are stubbed and ready.
+Exercise 4 (Go Agent) is a take-home stretch goal. The files are stubbed and ready.

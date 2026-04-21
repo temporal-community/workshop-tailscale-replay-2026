@@ -1,5 +1,5 @@
 <!--
-  Closing layout — Rex constellation background, centered sign-off.
+  Closing layout. Rex constellation background, centered sign-off.
   Use for the final "Questions?" / "Thank you" slide.
 -->
 <script setup lang="ts">

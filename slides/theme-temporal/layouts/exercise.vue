@@ -1,5 +1,5 @@
 <!--
-  Exercise timer layout — ⏱ N min + heading + instruction slot.
+  Exercise timer layout: "N min" chip plus heading plus instruction slot.
   `title` is reserved by Slidev for doc metadata, so we use `heading`.
   Example:
     ---
@@ -19,7 +19,6 @@ defineProps({
   <div class="slidev-layout exercise bg-glow">
     <div class="exercise-inner">
       <div class="timer">
-        <span class="clock">⏱</span>
         <span class="minutes">{{ minutes }}</span>
         <span class="unit">min</span>
       </div>
@@ -47,16 +46,13 @@ defineProps({
 .timer {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.35rem;
+  gap: 0.45rem;
   color: var(--temporal-green);
   font-weight: 300;
-  padding: 0.45rem 1rem;
+  padding: 0.45rem 1.1rem;
   border: 1px solid rgba(89, 253, 160, 0.35);
   border-radius: 999px;
   margin-bottom: 1.6rem;
-}
-.clock {
-  font-size: 1.1rem;
 }
 .minutes {
   font-size: 1.6rem;

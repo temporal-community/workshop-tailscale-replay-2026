@@ -1,7 +1,7 @@
 [project]
 name = "workshop-tailscale-replay-2026"
 version = "0.1.0"
-description = "Securing AI Applications with Tailscale and Temporal — Replay 2026 Workshop"
+description = "Securing AI Applications with Tailscale and Temporal - Replay 2026 Workshop"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -17,6 +17,11 @@ dev = [
     "mypy>=1.13.0",
     "pytest>=8.3.0",
     "ruff>=0.8.0",
+]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.0",
+    "mkdocs-material-extensions>=1.3.1",
 ]
 
 [tool.ruff]

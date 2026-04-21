@@ -1,0 +1,66 @@
+/* Temporal palette applied to the Material for MkDocs theme.
+   Keeps the docs site visually consistent with the workshop deck. */
+
+:root {
+  --md-primary-fg-color:        #7C3AED;
+  --md-primary-fg-color--light: #A879F5;
+  --md-primary-fg-color--dark:  #5B21B6;
+  --md-accent-fg-color:         #10A96C;
+
+  --temporal-mint:  #59FDA0;
+  --temporal-green: #10A96C;
+  --temporal-indigo: #0B1020;
+}
+
+/* Dark scheme tuning. Match the slide deck background. */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #C3A0FF;
+  --md-primary-fg-color--light: #DDD6FE;
+  --md-primary-fg-color--dark:  #7C3AED;
+  --md-accent-fg-color:         #59FDA0;
+
+  --md-default-bg-color:        #0B1020;
+  --md-default-fg-color:        #E5E7EB;
+  --md-default-fg-color--light: #C7D7FE;
+  --md-default-fg-color--lighter: #7C8FB1;
+
+  --md-code-bg-color:           #111827;
+  --md-code-fg-color:           #F8F8F2;
+}
+
+/* Inline code gets the Temporal lavender chip */
+[data-md-color-scheme="slate"] :not(pre) > code {
+  background: rgba(124, 58, 237, 0.18);
+  color: #C3A0FF;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 4px;
+  padding: 0.05em 0.4em;
+}
+
+/* Tighten heading font. Match deck's ExtraLight/Light feel. */
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+.md-typeset h1 {
+  font-weight: 200;
+}
+
+/* Subtle link color for the mint accent */
+.md-typeset a {
+  color: var(--md-accent-fg-color);
+}
+
+/* Admonition accents use Temporal palette. */
+.md-typeset .admonition.note,
+.md-typeset details.note {
+  border-color: var(--md-primary-fg-color);
+}
+
+.md-typeset .admonition.tip,
+.md-typeset details.tip {
+  border-color: var(--md-accent-fg-color);
+}
