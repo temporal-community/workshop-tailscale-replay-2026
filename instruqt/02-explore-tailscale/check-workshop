@@ -1,13 +1,18 @@
 #!/bin/bash
 set -euo pipefail
 
-# Light check — verify attendee ran tailscale status
-# In a workshop setting, this is mostly instructor-paced,
-# so we just verify Tailscale is connected.
-
+# Verify Tailscale is still connected (Part 1 baseline).
 if ! tailscale status > /dev/null 2>&1; then
     fail-message "Tailscale is not connected. Run: tailscale up"
     exit 1
 fi
 
-echo "Tailscale is connected. Challenge complete!"
+# Verify the attendee's Go tsnet worker has shown up on the tailnet at least once.
+# This is proof they completed TODO 1 and TODO 2 and ran the worker.
+USER_ID="${WORKSHOP_USER_ID:-$(hostname | tr '[:upper:]' '[:lower:]')}"
+if ! tailscale status | grep -q "${USER_ID}-go-worker"; then
+    fail-message "We don't see '${USER_ID}-go-worker' on the tailnet yet. Run 'go run . worker' in the practice directory after completing the TODOs."
+    exit 1
+fi
+
+echo "Tailscale is connected and the Go tsnet worker has joined the tailnet. Challenge complete!"

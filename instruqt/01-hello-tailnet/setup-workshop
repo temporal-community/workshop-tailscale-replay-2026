@@ -22,8 +22,8 @@ apt-get install -y -qq python3.13 python3.13-venv python3.13-dev
 curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 
-# Go
-GO_VERSION="1.22.5"
+# Go 1.26+ is required for Exercise 2 Part 3 (tsnet) and Exercise 4 (Go agent).
+GO_VERSION="1.26.2"
 curl -LsSf "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar -C /usr/local -xzf -
 export PATH="/usr/local/go/bin:$PATH"
 

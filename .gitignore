@@ -209,6 +209,8 @@ __marimo__/
 # Go
 exercises/04_go_agent/practice/go-agent
 exercises/04_go_agent/solution/go-agent
+exercises/02_explore_tailscale/go-hello-tsnet/practice/practice
+exercises/02_explore_tailscale/go-hello-tsnet/solution/solution
 
 # Node (Slidev)
 node_modules/

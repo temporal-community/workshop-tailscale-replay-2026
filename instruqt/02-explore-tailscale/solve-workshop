@@ -1,9 +1,19 @@
 #!/bin/bash
 set -euxo pipefail
 
-# Run the exploration commands
+# Part 1: exploration commands
 tailscale status
 tailscale ping temporal-dev
 tailscale whois $(tailscale ip -4)
 nc -zv temporal-dev 7233
 curl -s -o /dev/null -w "%{http_code}" http://temporal-dev:8233
+
+# Part 3: copy the solution over the practice TODOs and run the starter
+SOLUTION_DIR=/root/workshop/exercises/02_explore_tailscale/go-hello-tsnet/solution
+PRACTICE_DIR=/root/workshop/exercises/02_explore_tailscale/go-hello-tsnet/practice
+
+cp "$SOLUTION_DIR/main.go" "$PRACTICE_DIR/main.go"
+
+cd "$PRACTICE_DIR"
+go mod tidy
+go run . starter

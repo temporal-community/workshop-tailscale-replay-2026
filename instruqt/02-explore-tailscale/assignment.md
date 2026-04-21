@@ -4,7 +4,7 @@ type: challenge
 title: "Explore Your Tailscale Network"
 teaser: Discover what's on the tailnet and understand how Aperture secures API calls
 difficulty: basic
-timelimit: 900
+timelimit: 1200
 notes:
   - type: text
     contents: |-
@@ -94,11 +94,64 @@ curl -s -o /dev/null -w "%{http_code}" http://temporal-dev:8233
 # curl https://aperture.<tailnet-name>.ts.net/v1/models
 ```
 
+## Part 3: Hello World in Go with tsnet
+
+In Exercise 1 your Python worker reached Temporal through the VM's system Tailscale client. Now you'll run the same geo-IP workflow as a Go worker that joins the tailnet *itself* via [tsnet](https://pkg.go.dev/tailscale.com/tsnet) — its own node, its own hostname, no system install required.
+
+### Step 1: Move to the practice directory
+
+```bash
+cd /root/workshop/exercises/02_explore_tailscale/go-hello-tsnet/practice
+go mod download
+```
+
+### Step 2: Open main.go and complete TODO 1
+
+Build a `tsnet.Server` for this worker — see the comment block above `startTsnet`. Fill in `Hostname`, `Dir`, `AuthKey`, then call `Start()` and `Up(ctx)`.
+
+### Step 3: Complete TODO 2
+
+In `dialTemporal`, add a `grpc.WithContextDialer` that calls `tsNode.Dial`. This is what routes the Temporal SDK's gRPC traffic over the tailnet.
+
+### Step 4: Run the worker
+
+```bash
+go run . worker
+```
+
+First run takes ~5 seconds to join the tailnet. You should see:
+
+```
+joined tailnet as <your-user-id>-go-worker
+connected to temporal at temporal-dev:7233 via tsnet
+Starting Go worker on task queue: <your-user-id>-hello-tsnet
+```
+
+### Step 5: Confirm the worker is on the tailnet
+
+In the second terminal tab (same VM):
+
+```bash
+tailscale status | grep $WORKSHOP_USER_ID-go-worker
+```
+
+Your Go worker shows up as its own tailnet node, distinct from the VM.
+
+### Step 6: Run the workflow
+
+```bash
+go run . starter
+```
+
+Watch it appear in the Temporal UI.
+
 ## What You've Learned
 
 - How to discover machines on a Tailscale network
 - That Tailscale provides identity for free — no extra auth needed
 - How Aperture uses that identity to proxy and rate-limit API calls
+- How to embed Tailscale directly into a Go worker using tsnet
+- That the same Temporal workflow runs identically whether the worker joins via the system Tailscale client (Ex 1) or via tsnet (Ex 2 Part 3)
 - The full network path: Your VM → Tailscale → Temporal Server / Aperture → OpenAI
 
 Next up: you'll use Aperture to power an AI agent workflow.
