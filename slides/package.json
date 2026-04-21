@@ -1,0 +1,16 @@
+{
+  "name": "workshop-tailscale-temporal-slides",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "slidev",
+    "build": "slidev build",
+    "export": "slidev export"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "dependencies": {
+    "slidev-theme-temporal": "link:./theme-temporal"
+  },
+  "devDependencies": {
+    "@slidev/cli": "^52.14.2"
+  }
+}

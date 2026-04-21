@@ -219,3 +219,11 @@ slides/node_modules/
 # Workshop
 commit-msg.md
 .ai-sessions/
+
+# Playwright / local screenshot iteration artifacts
+.playwright-mcp/
+slide-*.png
+slide-*.jpeg
+
+# Reference material used to design the theme (source PPTX, logo, bg PNGs)
+reference/
