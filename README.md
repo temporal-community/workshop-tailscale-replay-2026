@@ -1,245 +1,74 @@
-# Temporal + Tailscale Workshop — Replay 2026
+# Securing AI Applications with Tailscale and Temporal
 
-## Topology
+Workshop materials for the joint Tailscale + Temporal session at **Replay 2026**.
 
-```
-╔══════════════════════════════════════════════════════════════════════╗
-║                         Tailscale Tailnet                            ║
-║                                                                      ║
-║  ┌─────────────────────────┐   ┌──────────────────────────────────┐  ║
-║  │  temporal-dev           │   │  metrics-server                  │  ║
-║  │  Linux VM               │   │  Linux VM                        │  ║
-║  │                         │   │                                  │  ║
-║  │  temporal-ts-net        │   │  node_exporter (Docker)          │  ║
-║  │  joins via tsnet        │   │  :9100/metrics                   │  ║
-║  │  :7233 gRPC             │   │                                  │  ║
-║  │  :8233 UI               │   │  Tailscale (Linux binary client) │  ║
-║  └─────────────────────────┘   │  joins as metrics-server         │  ║
-║                                └──────────────────────────────────┘  ║
-║  ┌─────────────────────────┐                                         ║
-║  │  http://ai              │                                         ║
-║  │  Aperture (Claude API)  │                                         ║
-║  └─────────────────────────┘                                         ║
-║                                                                      ║
-║  ┌─────────────────────────────────────────────────────────────┐     ║
-║  │  lab-worker  ←  YOU RUN THIS                                │     ║
-║  │  joins tailnet via tsnet (no Tailscale install required)    │     ║
-║  │  fetches metrics-server:9100 → asks Aperture → records in   │     ║
-║  │  Temporal workflow every minute                             │     ║
-║  └─────────────────────────────────────────────────────────────┘     ║
-╚══════════════════════════════════════════════════════════════════════╝
+## What you'll build
+
+A durable AI weather agent powered by Temporal, secured by Tailscale:
+
+- **Temporal** orchestrates an agentic loop where an LLM autonomously chains tool calls
+- **Tailscale** provides zero-config encrypted networking between your VM and the shared infrastructure
+- **Aperture** proxies LLM calls with rate limiting and shared key management. No OpenAI key needed on your VM
+
+```mermaid
+flowchart LR
+  VM[Your Instruqt VM<br/>Python + Go workers]
+  TS[Temporal Dev Server<br/>temporal-dev:7233 / :8233]
+  AP[Aperture<br/>API Gateway]
+  OAI[OpenAI API<br/>shared key]
+  VM <-. Tailnet .-> TS
+  VM <-. Tailnet .-> AP
+  AP --> OAI
 ```
 
-The `temporal-dev` and `lab-worker` components join the tailnet via
-[tsnet](https://pkg.go.dev/tailscale.com/tsnet) — no Tailscale install
-required, just a `TS_AUTHKEY`. The `metrics-server` VM runs the system
-Tailscale client alongside node_exporter in Docker.
+## Prerequisites
 
----
+Your Instruqt VM comes pre-configured with everything you need:
 
-## Workshop: Running the worker
-
-Everything except the worker is pre-provisioned. You only need Go and an auth key.
-
-### Prerequisites
-
+- Python 3.13 and `uv`
 - Go 1.26+
-- `TS_AUTHKEY` provided by your workshop facilitator
+- Tailscale, already connected to the workshop tailnet
+- Workshop code cloned, dependencies installed
 
-### Run
+## Quick start
 
-```shell
-git clone https://github.com/temporal-community/workshop-tailscale-replay-2026
-cd workshop-tailscale-replay-2026
+Verify your environment:
 
-TS_AUTHKEY=tskey-auth-<provided-key> \
-METRICS_URL=http://metrics-server:9100/metrics \
-go run ./cmd/worker
+```bash
+uv run scripts/verify_setup.py
 ```
 
-The worker joins the tailnet as `lab-worker` and starts a cron workflow
-that runs every minute.
+Then start with [Exercise 1](exercises/01_hello_tailnet/README.md).
 
-### View results
+## Exercises
 
-Open the Temporal UI in your browser (you must be on the tailnet):
+| # | Exercise | Time | Description |
+|---|----------|------|-------------|
+| 1 | [Hello Tailnet](exercises/01_hello_tailnet/README.md) | 15 min | Run a geo-IP workflow on the shared Temporal server via Tailscale |
+| 2 | [Explore Tailscale](exercises/02_explore_tailscale/README.md) | 15 min | Discover your network, understand Aperture, run a Go worker over `tsnet` |
+| 3 | [Weather Agent](exercises/03_weather_agent/README.md) | 25 min | Build a durable AI agent with LLM calls routed through Aperture |
+| 4 | [Metrics Watcher](exercises/04_go_agent/README.md) | Stretch | Schedule a Go tsnet worker to fetch metrics from a tailnet node and summarize them with Claude |
+
+## Temporal Web UI
+
+Once your VM is on the tailnet, open the shared Temporal Web UI:
 
 ```
 http://temporal-dev:8233
 ```
 
-Navigate to the `health-check` workflow. Each completed run shows a
-system info block and an AI-generated health summary of the metrics
-server.
+You'll see everyone's workflows running on the shared server.
 
-### Environment variables
+## Resources
 
-| Variable        | Required | Default               | Description                        |
-|-----------------|----------|-----------------------|------------------------------------|
-| `TS_AUTHKEY`    | yes*     | —                     | Tailscale auth key (required on first run; reuses stored state after) |
-| `METRICS_URL`   | yes      | —                     | node_exporter endpoint on tailnet  |
-| `TEMPORAL_HOST` | no       | `temporal-dev:7233`   | Temporal server address            |
-| `AI_URL`        | no       | `http://ai`           | Aperture endpoint                  |
-| `AI_MODEL`      | no       | `claude-haiku-4-5`    | Claude model                       |
-
-### Run tests (no tailnet needed)
-
-```shell
-go test ./...
-```
+- [temporal-ts-net](https://github.com/temporal-community/temporal-ts-net) - Temporal CLI extension for Tailscale
+- [Temporal Python SDK](https://docs.temporal.io/develop/python)
+- [Temporal Go SDK](https://docs.temporal.io/develop/go)
+- [Tailscale docs](https://tailscale.com/kb)
+- [Aperture docs](https://docs.tailscale.com/aperture)
 
 ---
 
-## Workshop persistent infrastructure setup
+### Running this workshop yourself?
 
-### temporal-dev VM
-
-This VM runs `temporal server start-dev` and exposes it on the tailnet
-as `temporal-dev` via [temporal-ts-net](https://github.com/temporal-community/temporal-ts-net).
-
-**Install the Temporal CLI**
-
-```shell
-curl -sSf https://temporal.download/cli.sh | sh
-echo 'export PATH=$PATH:$HOME/.temporalio/bin' >> ~/.bashrc && source ~/.bashrc
-```
-
-**Install the temporal-ts-net extension**
-
-```shell
-curl -sSfL https://raw.githubusercontent.com/temporal-community/temporal-ts-net/main/install.sh | sh
-```
-
-Verify the extension is found:
-
-```shell
-temporal help --all | grep ts-net
-```
-
-**Run**
-
-```shell
-TS_AUTHKEY=tskey-auth-<key> temporal ts-net
-```
-
-On first run it joins the tailnet as `temporal-dev`. You'll see:
-
-```
-Tailnet gRPC: temporal-dev:7233
-Tailnet UI:   http://temporal-dev:8233
-```
-
----
-
-### metrics-server VM
-
-This VM runs node_exporter in Docker and joins the tailnet as
-`metrics-server` via the system Tailscale client.
-
-**Install Tailscale**
-
-```shell
-curl -fsSL https://tailscale.com/install.sh | sh
-tailscale up --authkey=tskey-auth-<key> --hostname=metrics-server
-```
-
-Verify it's on the tailnet:
-
-```shell
-tailscale status | grep metrics-server
-```
-
-**Install Docker**
-
-```shell
-curl -fsSL https://get.docker.com | sh
-```
-
-**Run node_exporter**
-
-```shell
-docker run -d \
-  --name node-exporter \
-  --restart unless-stopped \
-  --net=host \
-  --pid=host \
-  -v /:/host:ro,rslave \
-  prom/node-exporter \
-  --path.rootfs=/host \
-  --web.listen-address=0.0.0.0:9100
-```
-
-`--net=host` ensures node_exporter listens on the Tailscale interface so
-other tailnet nodes can reach it.
-
-Verify metrics are reachable on the tailnet:
-
-```shell
-curl http://metrics-server:9100/metrics | head -5
-```
-
----
-
-## Local dev testing (Mac — all services on one machine)
-
-Runs the full stack locally on a Mac that has Tailscale installed.
-Three terminal windows. You need two auth keys — one for `temporal-dev`,
-one for `lab-worker`. Generate ephemeral keys in the
-[Tailscale admin console](https://login.tailscale.com/admin/settings/keys).
-
-### Prerequisites
-
-```shell
-# Temporal CLI
-brew install temporal
-
-# temporal-ts-net extension
-curl -sSfL https://raw.githubusercontent.com/temporal-community/temporal-ts-net/main/install.sh | sh
-
-# Verify
-temporal help --all | grep ts-net
-
-# node_exporter
-brew install node_exporter
-```
-
-### Terminal 1 — temporal-dev
-
-```shell
-TS_AUTHKEY=tskey-auth-<key-1> temporal ts-net
-```
-
-### Terminal 2 — node_exporter
-
-node_exporter binds to `localhost` by default. Pass
-`--web.listen-address` so it's reachable on the Tailscale interface:
-
-```shell
-node_exporter --web.listen-address=0.0.0.0:9100
-```
-
-Find your Mac's Tailscale hostname:
-
-```shell
-tailscale status | head -3
-```
-
-Verify it's reachable:
-
-```shell
-curl http://<your-mac-tailscale-hostname>:9100/metrics | head -5
-```
-
-### Terminal 3 — worker
-
-```shell
-TS_AUTHKEY=tskey-auth-<key-2> \
-METRICS_URL=http://<your-mac-tailscale-hostname>:9100/metrics \
-go run ./cmd/worker
-```
-
-### Verify
-
-Open `http://temporal-dev:8233` in a browser. The `health-check`
-workflow runs every minute. Click into a completed run to see the
-AI-generated health summary.
+This repo is also a community asset. If you want to teach the session, run it locally, or remix the stack, see the [**community guide**](https://temporal-community.github.io/workshop-tailscale-replay-2026/) for instructor walkthroughs (with and without Instruqt), infrastructure setup, and architecture deep-dives.
