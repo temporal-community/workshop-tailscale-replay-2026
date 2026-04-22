@@ -7,9 +7,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"go.temporal.io/sdk/client"
@@ -34,7 +36,7 @@ func main() {
 	}
 	taskQueue := fmt.Sprintf("%s-hello-tsnet", userID)
 
-	tsNode := startTsnet(userID)
+	tsNode := startTsnet(userID, mode)
 	defer tsNode.Close()
 
 	c := dialTemporal(tsNode)
@@ -50,25 +52,31 @@ func main() {
 	}
 }
 
-func startTsnet(userID string) *tsnet.Server {
+func startTsnet(userID, mode string) *tsnet.Server {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		log.Fatalf("user config dir: %v", err)
 	}
 	_ = configDir // used by TODO 1b below
 
-	tsNode := &tsnet.Server{
-		// TODO 1a: Set Hostname to fmt.Sprintf("%s-go-worker", userID)
-		//          — this is the name your node will have on the tailnet.
-		Hostname: "",
+	nodeName, err := resolveNodeName(configDir, userID, mode)
+	if err != nil {
+		log.Fatalf("resolve node name: %v", err)
+	}
+	_ = nodeName // used by TODO 1a and 1b below
 
-		// TODO 1b: Set Dir to filepath.Join(configDir, "workshop-tsnet", userID+"-go-worker")
+	tsNode := &tsnet.Server{
+		// TODO 1a: Set Hostname to nodeName
+		//          — this is the name your node will have on the tailnet.
+		Hostname:
+
+		// TODO 1b: Set Dir to filepath.Join(configDir, "workshop-tsnet", nodeName)
 		//          — tsnet stores its node key here so later runs reuse the identity.
-		Dir: "",
+		Dir:
 
 		// TODO 1c: Set AuthKey to os.Getenv("TS_AUTHKEY")
 		//          — consumed once on first run to register the node.
-		AuthKey: "",
+		AuthKey:
 	}
 	if err := tsNode.Start(); err != nil {
 		log.Fatalf("tsnet start: %v", err)
@@ -79,8 +87,36 @@ func startTsnet(userID string) *tsnet.Server {
 	if _, err := tsNode.Up(upCtx); err != nil {
 		log.Fatalf("tsnet up: %v", err)
 	}
-	log.Printf("joined tailnet as %s-go-worker", userID)
+	log.Printf("joined tailnet as %s", nodeName)
 	return tsNode
+}
+
+// resolveNodeName returns a stable, per-machine node name of the form
+// "<userID>-go-<mode>-<suffix>". The 5-char lowercase-alpha suffix is
+// generated once on first run and then reused on every subsequent run
+// (found by scanning workshop-tsnet/ for an existing dir with the same
+// prefix). Two attendees with the same WORKSHOP_USER_ID get different
+// suffixes, so their tailnet hostnames don't collide.
+func resolveNodeName(configDir, userID, mode string) (string, error) {
+	root := filepath.Join(configDir, "workshop-tsnet")
+	prefix := fmt.Sprintf("%s-go-%s-", userID, mode)
+
+	entries, err := os.ReadDir(root)
+	if err != nil && !os.IsNotExist(err) {
+		return "", err
+	}
+	for _, e := range entries {
+		if e.IsDir() && strings.HasPrefix(e.Name(), prefix) {
+			return e.Name(), nil
+		}
+	}
+
+	const letters = "abcdefghijklmnopqrstuvwxyz"
+	suffix := make([]byte, 5)
+	for i := range suffix {
+		suffix[i] = letters[rand.IntN(len(letters))]
+	}
+	return prefix + string(suffix), nil
 }
 
 // ============================================================================

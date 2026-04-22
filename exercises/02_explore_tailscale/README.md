@@ -130,9 +130,10 @@ go mod download
 Open `main.go`. Find TODO 1. Create a `tsnet.Server` with your own hostname and start it:
 
 ```go
+nodeName := fmt.Sprintf("%s-go-%s", userID, mode)
 tsNode := &tsnet.Server{
-    Hostname: fmt.Sprintf("%s-go-worker", userID),
-    Dir:      filepath.Join(configDir, "go-worker-"+userID),
+    Hostname: nodeName,
+    Dir:      filepath.Join(configDir, "workshop-tsnet", nodeName),
     AuthKey:  os.Getenv("TS_AUTHKEY"),
 }
 if err := tsNode.Start(); err != nil {
@@ -145,7 +146,7 @@ defer upCancel()
 if _, err := tsNode.Up(upCtx); err != nil {
     log.Fatalf("tsnet up: %v", err)
 }
-log.Printf("joined tailnet as %s-go-worker", userID)
+log.Printf("joined tailnet as %s", nodeName)
 ```
 
 The `Dir` field holds the tsnet state (node key, machine key). On first run it uses `TS_AUTHKEY` to register; on subsequent runs it reuses the stored identity.
