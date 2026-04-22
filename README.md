@@ -47,7 +47,7 @@ Then start with [Exercise 1](exercises/01_hello_tailnet/README.md).
 | 1 | [Hello Tailnet](exercises/01_hello_tailnet/README.md) | 15 min | Run a geo-IP workflow on the shared Temporal server via Tailscale |
 | 2 | [Explore Tailscale](exercises/02_explore_tailscale/README.md) | 15 min | Discover your network, understand Aperture, run a Go worker over `tsnet` |
 | 3 | [Weather Agent](exercises/03_weather_agent/README.md) | 15 min | Build a durable AI agent with LLM calls routed through Aperture |
-| 4 | [Go Agent](exercises/04_go_agent/README.md) | 15 min | The same weather agent, in Go |
+| 4 | [Metrics Watcher](exercises/04_go_agent/README.md) | 15 min | Schedule a Go tsnet worker to fetch metrics from a tailnet node and summarize them with Claude |
 
 ## Temporal Web UI
 

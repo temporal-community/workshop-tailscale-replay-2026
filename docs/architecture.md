@@ -14,10 +14,14 @@ flowchart LR
     TS["Temporal Dev Server<br/>temporal-dev:7233<br/>temporal-dev:8233"]
     AP["Aperture<br/>API Gateway"]
   end
+  MS["metrics-server<br/>node_exporter:9100"]
   OAI["OpenAI API<br/>(shared key)"]
+  CLA["Anthropic API<br/>(shared key)"]
   VM <-. Tailnet .-> TS
   VM <-. Tailnet .-> AP
+  VM <-. Tailnet .-> MS
   AP --> OAI
+  AP --> CLA
 ```
 
 Everything between the attendee machine and the shared infrastructure rides on an encrypted Tailscale mesh. There is no public port open on the VPS. If you're not on the tailnet, you can't reach it.
@@ -38,7 +42,7 @@ A Temporal CLI extension that runs the dev server and joins the tailnet via [tsn
 
 ### Aperture (API gateway)
 
-Sits between attendee code and OpenAI. Holds the real API key, forwards requests to `api.openai.com`, and enforces per-identity rate limits using the caller's Tailscale identity. Attendees never see the key, and one person running 500 agents can't burn the whole budget.
+Sits between attendee code and the LLM providers. Holds the real API keys (OpenAI for the Python weather agent, Anthropic for the Go metrics watcher), forwards requests upstream, and enforces per-identity rate limits using the caller's Tailscale identity. Attendees never see the keys, and one person running 500 agents can't burn the whole budget.
 
 ## The two agent patterns
 

@@ -642,7 +642,7 @@ current: tsnet
 layout: section
 ---
 
-# temporal-ts-net and Go Agent
+# temporal-ts-net and Metrics Watcher
 
 ---
 
@@ -675,28 +675,62 @@ for {
 
 ---
 
-# Exercise 4: Go Agent Preview
+# Your Worker Can Join the Tailnet Too
 
-**Exercise 4.** Same weather agent, in Go.
+The same `tsnet` library works from the client side. Your Go worker becomes a node on the tailnet:
 
 ```go
-func AgentWorkflow(ctx workflow.Context, input string) (string, error) {
-    for {
-        // Call LLM through Aperture
-        result := workflow.ExecuteActivity(ctx, CreateCompletion, ...)
+ts := &tsnet.Server{
+    Hostname: fmt.Sprintf("%s-metrics-worker", userID),
+    AuthKey:  os.Getenv("TS_AUTHKEY"),
+}
+ts.Start()
 
-        if result.Type == "function_call" {
-            // Execute the tool the LLM chose
-            toolResult := workflow.ExecuteActivity(ctx, result.Name, ...)
-            // Feed result back to LLM
-        } else {
-            return result.Text, nil
-        }
-    }
+// Dial any tailnet service directly
+grpcConn, _ := ts.Dial(ctx, "tcp", "temporal-dev:7233")
+httpClient := &http.Client{Transport: &http.Transport{DialContext: ts.Dial}}
+metrics, _ := httpClient.Get("http://metrics-server:9100/metrics")
+```
+
+<v-clicks>
+
+- Same `tsnet.Server`, different role: client this time, not listener
+- Works for gRPC (Temporal) and HTTP (Aperture, `node_exporter`)
+- Hostname becomes your identity on the tailnet
+
+</v-clicks>
+
+---
+
+# Exercise 4: Metrics Watcher
+
+**Exercise 4.** A finished Go worker scrapes `node_exporter` metrics off a tailnet node and asks Claude via Aperture to write a health report on a schedule.
+
+```go
+func HealthCheckWorkflow(ctx workflow.Context) (HealthReport, error) {
+    ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+        StartToCloseTimeout: 30 * time.Second,
+    })
+    var act *Activities
+
+    var metrics string
+    workflow.ExecuteActivity(ctx, act.FetchMetrics).Get(ctx, &metrics)
+
+    var report HealthReport
+    workflow.ExecuteActivity(ctx, act.AnalyzeMetrics, metrics).Get(ctx, &report)
+    return report, nil
 }
 ```
 
-Same Temporal server. Same Aperture endpoint. Same tailnet. Different language.
+New pieces: tsnet in the worker, a Temporal Schedule, Claude instead of OpenAI. Same tailnet, same Aperture.
+
+---
+layout: exercise
+heading: Exercise 4
+minutes: 15
+---
+
+Run the finished metrics watcher. Watch the Schedule fire. Tune the interval. Edit the Claude prompt and see the `HealthReport` change on the next fire.
 
 ---
 layout: toc
@@ -717,10 +751,10 @@ layout: section
 
 | Layer | Technology | What It Does |
 |-------|-----------|--------------|
-| **Durability** | Temporal | Orchestrates the agent loop, retries failures, survives crashes |
-| **Networking** | Tailscale | Zero-config encrypted mesh between all machines |
-| **API Security** | Aperture | Shared key management, identity-based rate limiting |
-| **AI Agent** | OpenAI + Python | Multi-step reasoning with autonomous tool selection |
+| **Durability** | Temporal | Orchestrates workflows and Schedules, retries failures, survives crashes |
+| **Networking** | Tailscale + tsnet | Zero-config encrypted mesh, reachable from servers and workers alike |
+| **API Security** | Aperture | Shared key management, identity-based rate limiting, model-agnostic |
+| **AI** | OpenAI (Python agent) + Claude (Go watcher) | Same gateway, two vendors, two languages |
 
 <br>
 

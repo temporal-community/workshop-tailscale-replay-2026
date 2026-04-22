@@ -33,10 +33,10 @@ Every LLM call goes through Aperture, which holds the real OpenAI key and applie
 | AI agents on Temporal (talk) | 10 min |
 | Exercise 3 - Weather agent | 15 min |
 | Rate-limit demo (everyone fires at once) | 5 min |
-| Exercise 4 (Go agent) + `temporal-ts-net` walk-through | 15 min |
+| Exercise 4 - Metrics watcher + `temporal-ts-net` walk-through | 15 min |
 | Wrap-up + Q&A | 5 min |
 
-Exercise 4 translates the weather agent to Go, reusing the same Temporal server, Aperture endpoint, and tailnet.
+Exercise 4 is a finished Go worker that joins the tailnet via `tsnet`, pulls `node_exporter` metrics from another tailnet node, and runs a Temporal Schedule that asks Claude via Aperture for a plain-English health report. Attendees run it, tune the interval, and tweak the prompt.
 
 ## What attendees need
 

@@ -207,10 +207,23 @@ marimo/_lsp/
 __marimo__/
 
 # Go
-exercises/04_go_agent/practice/go-agent
-exercises/04_go_agent/solution/go-agent
+/bin/
+*.exe
+*.test
+*.out
+exercises/04_go_agent/practice/04_go_agent
+exercises/04_go_agent/practice/practice
 exercises/02_explore_tailscale/go-hello-tsnet/practice/practice
 exercises/02_explore_tailscale/go-hello-tsnet/solution/solution
+
+# Tailscale tsnet state (contains auth keys / node private keys)
+/lab-worker/
+**/lab-worker/
+**/workshop-tsnet/
+
+# Auth keys / secrets
+*.env
+tskey-*
 
 # Node (Slidev)
 node_modules/

@@ -13,7 +13,7 @@ const sections = [
   { id: 'agents',     label: 'AI Agents on Temporal' },
   { id: 'ex3',        label: 'Exercise 3: Weather Agent' },
   { id: 'ratelimit',  label: 'Rate Limit Demo' },
-  { id: 'tsnet',      label: 'temporal-ts-net and Go Agent' },
+  { id: 'tsnet',      label: 'temporal-ts-net and Metrics Watcher' },
   { id: 'wrap',       label: 'Wrap-Up' },
 ]
 </script>

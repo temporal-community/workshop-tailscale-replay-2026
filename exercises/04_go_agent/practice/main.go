@@ -1,61 +1,174 @@
-// ABOUTME: Worker and starter for the Go weather agent exercise.
-// ABOUTME: Connects to the shared Temporal server on the Tailscale network.
-
 package main
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
+	"net"
 	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
+	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
+	"tailscale.com/tsnet"
+)
+
+const (
+	defaultTemporalHost   = "temporal-dev:7233"
+	defaultAIURL          = "http://ai"
+	defaultAIModel        = "claude-haiku-4-5"
+	defaultUserID         = "lab"
+	defaultCheckIntervalS = "10m"
 )
 
 func main() {
-	// TODO: Connect to the Temporal server on the Tailscale network.
-	// Use the TEMPORAL_ADDRESS environment variable.
-	address := os.Getenv("TEMPORAL_ADDRESS")
-	if address == "" {
-		address = "localhost:7233"
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		logger.Error("UserConfigDir", "err", err)
+		os.Exit(1)
 	}
 
-	userID := os.Getenv("WORKSHOP_USER_ID")
-	if userID == "" {
-		userID = "unknown"
+	userID := envOr("WORKSHOP_USER_ID", defaultUserID)
+	hostname := fmt.Sprintf("%s-metrics-worker", userID)
+	taskQueue := fmt.Sprintf("%s-health-check", userID)
+	workflowID := fmt.Sprintf("%s-health-check", userID)
+	scheduleID := fmt.Sprintf("%s-health-check-schedule", userID)
+
+	tsNode := &tsnet.Server{
+		Hostname: hostname,
+		Dir:      filepath.Join(configDir, "workshop-tsnet", hostname),
+		AuthKey:  os.Getenv("TS_AUTHKEY"),
 	}
+	if err := tsNode.Start(); err != nil {
+		logger.Error("tsnet start", "err", err)
+		os.Exit(1)
+	}
+	defer tsNode.Close()
 
-	taskQueue := userID + "-go-agent"
+	upCtx, upCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer upCancel()
+	if _, err := tsNode.Up(upCtx); err != nil {
+		logger.Error("tsnet up", "err", err)
+		os.Exit(1)
+	}
+	logger.Info("joined tailnet", "hostname", hostname, "userID", userID)
 
+	temporalHost := envOr("TEMPORAL_HOST", defaultTemporalHost)
 	c, err := client.Dial(client.Options{
-		HostPort: address,
+		HostPort: temporalHost,
+		Logger:   logger,
+		ConnectionOptions: client.ConnectionOptions{
+			DialOptions: []grpc.DialOption{
+				grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+					host, _, _ := net.SplitHostPort(addr)
+					if host == "localhost" || host == "127.0.0.1" {
+						return (&net.Dialer{}).DialContext(ctx, "tcp", addr)
+					}
+					return tsNode.Dial(ctx, "tcp", addr)
+				}),
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpc.WithKeepaliveParams(keepalive.ClientParameters{
+					Time:                30 * time.Second,
+					Timeout:             10 * time.Second,
+					PermitWithoutStream: true,
+				}),
+			},
+		},
 	})
 	if err != nil {
-		log.Fatalln("Unable to create client", err)
+		logger.Error("temporal dial", "err", err)
+		os.Exit(1)
 	}
 	defer c.Close()
+	logger.Info("connected to temporal", "host", temporalHost)
 
-	if len(os.Args) > 1 && os.Args[1] == "run" {
-		// Start a workflow
-		runWorkflow(context.Background(), c, userID, taskQueue)
-		return
+	metricsURL := mustEnv(logger, "METRICS_URL")
+	acts := NewActivities(
+		tsNode.HTTPClient(),
+		metricsURL,
+		envOr("AI_URL", defaultAIURL),
+		envOr("AI_MODEL", defaultAIModel),
+	)
+
+	pingCtx, pingCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer pingCancel()
+	if sample, err := acts.FetchMetrics(pingCtx); err != nil {
+		logger.Warn("metrics endpoint unreachable", "url", metricsURL, "err", err)
+	} else {
+		logger.Info("metrics reachable", "url", metricsURL, "sample", strings.SplitN(sample, "\n", 2)[0])
 	}
 
-	// Start the worker
 	w := worker.New(c, taskQueue, worker.Options{})
+	w.RegisterWorkflow(HealthCheckWorkflow)
+	w.RegisterActivity(acts)
 
-	// TODO: Register the AgentWorkflow and activities
-	// w.RegisterWorkflow(AgentWorkflow)
-	// w.RegisterActivity(&Activities{})
+	interval := healthCheckInterval(logger)
 
-	log.Printf("Starting Go agent worker on task queue: %s\n", taskQueue)
-	err = w.Run(worker.InterruptCh())
-	if err != nil {
-		log.Fatalln("Unable to start worker", err)
+	cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cleanupCancel()
+	if err := c.ScheduleClient().GetHandle(cleanupCtx, scheduleID).Delete(cleanupCtx); err != nil {
+		logger.Debug("no existing schedule to delete (ok)", "id", scheduleID, "err", err)
+	}
+
+	schedCtx, schedCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer schedCancel()
+	_, schedErr := c.ScheduleClient().Create(schedCtx, client.ScheduleOptions{
+		ID: scheduleID,
+		Spec: client.ScheduleSpec{
+			Intervals: []client.ScheduleIntervalSpec{{Every: interval}},
+		},
+		Action: &client.ScheduleWorkflowAction{
+			ID:        workflowID,
+			Workflow:  HealthCheckWorkflow,
+			TaskQueue: taskQueue,
+		},
+		TriggerImmediately: true,
+		Overlap:            enumspb.SCHEDULE_OVERLAP_POLICY_SKIP,
+	})
+	if schedErr != nil {
+		logger.Error("create schedule", "id", scheduleID, "err", schedErr)
+		os.Exit(1)
+	}
+	logger.Info("created schedule", "id", scheduleID, "interval", interval.String(), "workflow", workflowID)
+
+	logger.Info("worker running", "taskQueue", taskQueue)
+	if err := w.Run(worker.InterruptCh()); err != nil {
+		logger.Error("worker stopped with error", "err", err)
+		os.Exit(1)
 	}
 }
 
-func runWorkflow(ctx context.Context, c client.Client, userID, taskQueue string) {
-	// TODO: Start the AgentWorkflow
-	log.Println("Go agent workflow execution not yet implemented")
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+func mustEnv(logger *slog.Logger, key string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		logger.Error("required env var not set", "key", key)
+		os.Exit(1)
+	}
+	return v
+}
+
+func healthCheckInterval(logger *slog.Logger) time.Duration {
+	raw := envOr("HEALTH_CHECK_INTERVAL", defaultCheckIntervalS)
+	d, err := time.ParseDuration(raw)
+	if err != nil || d <= 0 {
+		logger.Warn("invalid HEALTH_CHECK_INTERVAL, using default", "value", raw, "default", defaultCheckIntervalS)
+		fallback, _ := time.ParseDuration(defaultCheckIntervalS)
+		return fallback
+	}
+	return d
 }

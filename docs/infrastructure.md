@@ -21,19 +21,6 @@ The workshop needs one long-lived VPS that runs `temporal-ts-net` and joins the 
 
 If you're building something that runs for longer than a workshop or exposes the server to arbitrary traffic, switch to a real deployment before you hit the limits.
 
-### Install Go 1.26+
-
-`temporal-ts-net` currently requires Go 1.26.1+ (tsnet dependency). On `amd64`:
-
-```shell
-wget https://go.dev/dl/go1.26.2.linux-amd64.tar.gz
-sudo tar -C /usr/local -xzf go1.26.2.linux-amd64.tar.gz
-echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.bashrc
-source ~/.bashrc
-```
-
-On `arm64` (for example, Hetzner ARM), swap `linux-amd64` for `linux-arm64`.
-
 ### Install the Temporal CLI
 
 ```shell
@@ -45,13 +32,14 @@ temporal --version   # must be v1.6.0+ for extension support
 
 ### Install `temporal-ts-net`
 
+A prebuilt binary for your architecture, no Go toolchain required:
+
 ```shell
-git clone https://github.com/temporal-community/temporal-ts-net
-cd temporal-ts-net
-go install ./cmd/temporal-ts_net
-cd ..
+curl -sSfL https://raw.githubusercontent.com/temporal-community/temporal-ts-net/main/install.sh | sh
 temporal help --all | grep ts-net   # verify the extension is found
 ```
+
+The installer picks the right binary for `amd64` or `arm64`.
 
 ### Get a Tailscale auth key for the server
 
