@@ -61,11 +61,17 @@ This exercise has two phases:
 
 Every LLM call goes through **Aperture** instead of directly to OpenAI. Aperture holds the shared API key, identifies you by your Tailscale identity, and enforces rate limits.
 
+> **Not on the tailnet?** If you joined late or `tailscale status` shows **Logged out**, run this in the **Worker** terminal first:
+>
+> ```bash
+> tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
+> ```
+
 ## Phase A: Tool-Calling
 
-### TODO 1 — Route LLM calls through Aperture
+### **TODO 1** - Route LLM calls through Aperture
 
-Open `activities.py` in the **Code Editor** tab. Find TODO 1 and add the Aperture base URL to the OpenAI client:
+Open `activities.py` in the **Code Editor** tab. Find **TODO 1** and add the Aperture base URL to the OpenAI client:
 
 ```python
 client = AsyncOpenAI(
@@ -96,17 +102,17 @@ You should see the LLM call the weather tool and return results. Check the **Tem
 
 ## Phase B: Agentic Loop
 
-### TODO 2 — Enable the loop
+### **TODO 2** - Enable the loop
 
-Open `agent_workflow.py` in the Code Editor. Find TODO 2 and change `False` to `True`:
+Open `agent_workflow.py` in the Code Editor. Find **TODO 2** and change `False` to `True`:
 
 ```python
 while True:
 ```
 
-### TODO 3 — Execute the dynamic activity
+### **TODO 3** - Execute the dynamic activity
 
-In the same file, find TODO 3 and replace the empty string:
+In the same file, find **TODO 3** and replace the empty string:
 
 ```python
 tool_result = await workflow.execute_activity(

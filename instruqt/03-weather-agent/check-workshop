@@ -1,31 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-source /root/.bashrc
-
-WORKSHOP_USER_ID=$(hostname | tr '[:upper:]' '[:lower:]')
-
-# Check that an agent workflow ran
-AGENT_COUNT=$(temporal workflow list \
-    --address temporal-dev:7233 \
-    --query "WorkflowId STARTS_WITH '${WORKSHOP_USER_ID}-agent'" \
-    --limit 1 2>/dev/null | grep -c "agent" || true)
-
-# Also accept tool-calling workflows
-TOOL_COUNT=$(temporal workflow list \
-    --address temporal-dev:7233 \
-    --query "WorkflowId STARTS_WITH '${WORKSHOP_USER_ID}-tool-calling'" \
-    --limit 1 2>/dev/null | grep -c "tool-calling" || true)
-
-if [ "$AGENT_COUNT" -eq 0 ] && [ "$TOOL_COUNT" -eq 0 ]; then
-    fail-message "No weather agent workflows found for your user ID (${WORKSHOP_USER_ID}). Did you run the starter?"
-    exit 1
-fi
-
-# Check that the Aperture base_url was set in activities.py
-if grep -q 'AsyncOpenAI(max_retries=0)' /root/workshop/exercises/03_weather_agent/practice/activities.py; then
-    fail-message "TODO 1 not complete — activities.py still has AsyncOpenAI(max_retries=0) without base_url"
-    exit 1
-fi
-
-echo "Weather agent challenge complete!"
+# Non-blocking check. The workshop is self-paced; attendees who join
+# late or want to skip ahead shouldn't be stuck on this gate.
+echo "Exercise 3 marked complete."

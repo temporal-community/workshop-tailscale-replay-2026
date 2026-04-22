@@ -1,31 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Verify the attendee completed the challenge:
-# 1. worker.py and starter.py both load the "tailnet" profile
-# 2. A geo-ip workflow prefixed with their user ID ran
-
-source /root/.bashrc
-
-PRACTICE=/root/workshop/exercises/01_hello_tailnet/practice
-
-# Check both worker and starter pass profile="tailnet"
-for file in "$PRACTICE/worker.py" "$PRACTICE/starter.py"; do
-    if ! grep -qE 'load_client_connect_config\([^)]*profile="tailnet"' "$file"; then
-        fail-message "${file} is still loading the default profile. Pass profile=\"tailnet\" to load_client_connect_config()."
-        exit 1
-    fi
-done
-
-# Check a geo-ip workflow ran under the attendee's user ID
-WORKFLOW_COUNT=$(temporal workflow list \
-    --address temporal-dev:7233 \
-    --query "WorkflowId STARTS_WITH '${WORKSHOP_USER_ID}-geo-ip'" \
-    --limit 1 2>/dev/null | grep -c "geo-ip" || true)
-
-if [ "$WORKFLOW_COUNT" -eq 0 ]; then
-    fail-message "No geo-ip workflow found prefixed with your user ID (${WORKSHOP_USER_ID}). Did you add USER_ID to the workflow ID and run starter.py?"
-    exit 1
-fi
-
-echo "Challenge complete! Your geo-ip workflow ran successfully on the tailnet."
+# Non-blocking check. The workshop is self-paced; attendees who join
+# late or want to skip ahead shouldn't be stuck on this gate.
+echo "Exercise 1 marked complete."

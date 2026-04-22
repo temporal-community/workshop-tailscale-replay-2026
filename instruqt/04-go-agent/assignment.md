@@ -48,6 +48,12 @@ enhanced_loading: null
 
 The same weather agent pattern, implemented in Go.
 
+> **Not on the tailnet?** If you joined late or `tailscale status` shows **Logged out**, run this in the **Worker** terminal first:
+>
+> ```bash
+> tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
+> ```
+
 ## Goal
 
 Port the Python agentic loop to Go, demonstrating that Temporal + Tailscale + Aperture work across languages. Same shared Temporal server, same Aperture endpoint, different language.

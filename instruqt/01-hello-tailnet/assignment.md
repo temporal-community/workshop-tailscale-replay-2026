@@ -11,9 +11,9 @@ notes:
     # Welcome to the Workshop!
 
     A Temporal dev server is running on a remote VPS, exposed to this
-    Tailscale network via **temporal-ts-net**. Your VM has the
-    Tailscale client installed but is not on the tailnet yet; you'll
-    join it in the first step.
+    Tailscale network via **temporal-ts-net**. Your Exercise
+    Environment has the Tailscale client installed but is not on
+    the tailnet yet; you'll join it in the first step.
 
     In this challenge you'll join the tailnet, configure the Temporal
     environment, run a simple geo-IP workflow, and see it in the
@@ -56,10 +56,10 @@ The workflow you'll run is simple: it gets your machine's public IP address, the
 
 ## Step 1: Join the tailnet
 
-Your VM has a Tailscale auth key available as `$TS_AUTHKEY`. In the **Worker** terminal, bring Tailscale up:
+Your Exercise Environment has a Tailscale auth key available as `$TS_AUTHKEY`. In the **Worker** terminal, bring Tailscale up:
 
 ```bash
-tailscale up --auth-key="$TS_AUTHKEY" --hostname="workshop-$(hostname)"
+tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
 ```
 
 Confirm you're connected and can see the shared Temporal server:
@@ -76,7 +76,7 @@ Open `temporal.toml` in the **Code Editor** tab. It's already in place in the wo
 
 ## Step 3: Point the SDK at the tailnet profile
 
-Open `exercises/01_hello_tailnet/practice/worker.py` and `starter.py` in the Code Editor. Each one currently loads the default profile, which points at localhost. Find the TODO in each file and change:
+Open `exercises/01_hello_tailnet/practice/worker.py` and `starter.py` in the Code Editor. Each one currently loads the default profile, which points at localhost. Find the **TODO** in each file and change:
 
 ```python
 config = ClientConfig.load_client_connect_config()
@@ -92,7 +92,7 @@ Now the worker and starter will read the `tailnet` profile from `temporal.toml` 
 
 ## Step 4: Add your name to the workflow ID
 
-Still in `starter.py`, find the TODO on the `execute_workflow` call and add your `USER_ID` to the workflow ID so you can find it in the shared Temporal UI:
+Still in `starter.py`, find the **TODO** on the `execute_workflow` call and add your `USER_ID` to the workflow ID so you can find it in the shared Temporal UI:
 
 ```python
 id=f"{USER_ID}-geo-ip-{uuid.uuid4()}",

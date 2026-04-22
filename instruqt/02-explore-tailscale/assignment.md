@@ -3,15 +3,16 @@ slug: explore-tailscale
 id: jysnh4r6f6cu
 type: challenge
 title: Explore Your Tailscale Network
-teaser: Discover what's on the tailnet and understand how Aperture secures API calls
+teaser: Explore the tailnet and run a Go worker that joins it via tsnet
 notes:
 - type: text
   contents: |-
     # Exploring the Network
 
     Now that you've proven the tailnet works, let's look under the hood.
-    You'll discover all the machines on the network and learn how
-    Aperture acts as a security gateway for LLM API calls.
+    You'll discover what's on the tailnet and then run a Go worker
+    that joins the tailnet as its own node via tsnet, instead of
+    riding on the Exercise Environment's Tailscale client.
 tabs:
 - id: fi2edgfrbxys
   title: Code Editor
@@ -40,100 +41,114 @@ enhanced_loading: null
 
 # Exercise 2: Exploring Your Tailscale Network
 
-Now that you've run a workflow through the tailnet, let's understand the network you're on.
+Now that you've run a workflow through the tailnet, let's look at the network itself: discover what's on it, see how Tailscale identity works, and run a Go worker that joins the tailnet as its own node via [`tsnet`](https://pkg.go.dev/tailscale.com/tsnet) instead of riding on the Exercise Environment's system client.
 
-## Part 1: Discover Your Network
+## Background
 
-### See all machines on the tailnet
+In Exercise 1 your Python worker reached Temporal through the Exercise Environment's Tailscale client: the environment was on the tailnet, and the worker inherited that connectivity. `tsnet` is the library inside Tailscale that lets a process join the tailnet directly, as its own tailnet node, with no system-wide install. Every Tailscale binary uses it under the hood, and you can embed it in any Go program. That's what `temporal-ts-net` does to put the Temporal dev server on the tailnet, and it's the pattern you'll use in Exercise 4 for the metrics watcher.
+
+> **Not on the tailnet?** If you joined late or `tailscale status` shows **Logged out**, run this in the **Worker** terminal first:
+>
+> ```bash
+> tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
+> ```
+
+## Step 1: See what's on the tailnet
+
+In the **Worker** terminal:
 
 ```bash
 tailscale status
 ```
 
 You should see:
-- **Your machine** — the Instruqt VM you're working on
-- **temporal-dev** — the VPS running the shared Temporal dev server
-- **Other attendee machines** — everyone else in the workshop
-- **Aperture endpoint** — the API gateway that will proxy your LLM calls
 
-### Ping the Temporal server
+- **Your Exercise Environment** (`workshop-<something>`) with a `100.x.y.z` tailnet IP
+- **`temporal-dev`** - the VPS running the shared Temporal dev server
+- **Other attendee machines** - everyone else in the workshop, each with their own hostname
+
+## Step 2: Ping the Temporal server
 
 ```bash
 tailscale ping temporal-dev
 ```
 
-Notice the latency. This is a direct, encrypted WireGuard connection.
+Watch the output. The first line says `pong ... via DERP` (relayed through Tailscale's infrastructure) and subsequent lines say `pong ... via <IP>:<port>` - that's a direct encrypted WireGuard path, no relay. Every packet to `temporal-dev` goes over that path.
 
-### Check your Tailscale identity
+## Step 3: Check your Tailscale identity
 
 ```bash
 tailscale whois $(tailscale ip -4)
 ```
 
-This shows your identity on the tailnet. Aperture uses this identity to track your API usage — no API keys needed on your machine.
+This prints your tailnet identity - machine name, tags, and the user that owns the node. Every packet you send on the tailnet is attributable to this identity, so services on the tailnet can authorize or rate-limit you without any API keys on your side.
 
-### Verify what's accessible
+## Step 4: Move to the Go `tsnet` practice directory
 
-```bash
-# gRPC port
-nc -zv temporal-dev 7233
+The rest of this exercise runs a Go worker that joins the tailnet via `tsnet`, then executes the same geo-IP workflow from Exercise 1.
 
-# Web UI
-curl -s -o /dev/null -w "%{http_code}" http://temporal-dev:8233
-```
-
-## Part 2: Understanding Aperture
-
-<!-- ============================================================
-     KARTIK: This section is yours to fill.
-
-     Suggested content:
-     - How Aperture proxies API calls (architecture)
-     - How it identifies users (by Tailscale identity)
-     - Rate limiting configuration for this workshop
-     - Quick demo of the Aperture dashboard/metrics
-     - Any Tailscale Serve / Funnel demonstration
-
-     Target time: ~10 minutes
-     ============================================================ -->
-
-### How Aperture secures your LLM calls
-
-*[Kartik to fill: explanation of Aperture's role as an API gateway]*
-
-### Try the Aperture endpoint
+In the **Worker** terminal:
 
 ```bash
-# Example — update with actual endpoint from Kartik:
-# curl https://aperture.<tailnet-name>.ts.net/v1/models
-```
-
-## Part 3: Hello World in Go with tsnet
-
-In Exercise 1 your Python worker reached Temporal through the VM's system Tailscale client. Now you'll run the same geo-IP workflow as a Go worker that joins the tailnet *itself* via [tsnet](https://pkg.go.dev/tailscale.com/tsnet) — its own node, its own hostname, no system install required.
-
-### Step 1: Move to the practice directory
-
-```bash
-cd /root/workshop/exercises/02_explore_tailscale/go-hello-tsnet/practice
+cd exercises/02_explore_tailscale/go-hello-tsnet/practice
 go mod download
 ```
 
-### Step 2: Open main.go and complete TODO 1
+## Step 5: Complete **TODO 1** - Start a `tsnet` node
 
-Build a `tsnet.Server` for this worker — see the comment block above `startTsnet`. Fill in `Hostname`, `Dir`, `AuthKey`, then call `Start()` and `Up(ctx)`.
+Open `exercises/02_explore_tailscale/go-hello-tsnet/practice/main.go` in the Code Editor. Find **TODO 1**. It's a scaffold for a `tsnet.Server`. Fill it in:
 
-### Step 3: Complete TODO 2
+```go
+tsNode := &tsnet.Server{
+    Hostname: fmt.Sprintf("%s-go-worker", userID),
+    Dir:      filepath.Join(configDir, "go-worker-"+userID),
+    AuthKey:  os.Getenv("TS_AUTHKEY"),
+}
+if err := tsNode.Start(); err != nil {
+    log.Fatalf("tsnet start: %v", err)
+}
+defer tsNode.Close()
 
-In `dialTemporal`, add a `grpc.WithContextDialer` that calls `tsNode.Dial`. This is what routes the Temporal SDK's gRPC traffic over the tailnet.
+upCtx, upCancel := context.WithTimeout(context.Background(), 30*time.Second)
+defer upCancel()
+if _, err := tsNode.Up(upCtx); err != nil {
+    log.Fatalf("tsnet up: %v", err)
+}
+log.Printf("joined tailnet as %s-go-worker", userID)
+```
 
-### Step 4: Run the worker
+`Dir` holds the `tsnet` state (node key, machine key). First run uses `TS_AUTHKEY` to register the node; subsequent runs reuse the stored identity.
+
+## Step 6: Complete **TODO 2** - Dial Temporal through `tsnet`
+
+Still in `main.go`, find **TODO 2** near `dialTemporal`. The Temporal SDK wants to open a gRPC connection to `temporal-dev:7233`. To route that through the tailnet, inject a custom `ContextDialer` that calls `tsNode.Dial`:
+
+```go
+c, err := client.Dial(client.Options{
+    HostPort: "temporal-dev:7233",
+    ConnectionOptions: client.ConnectionOptions{
+        DialOptions: []grpc.DialOption{
+            grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+                return tsNode.Dial(ctx, "tcp", addr)
+            }),
+            grpc.WithTransportCredentials(insecure.NewCredentials()),
+        },
+    },
+})
+```
+
+Every byte the SDK wants to send now flows through `tsNode.Dial`, which routes over the tailnet.
+
+## Step 7: Start the Go worker
+
+In the **Worker** terminal:
 
 ```bash
+cd exercises/02_explore_tailscale/go-hello-tsnet/practice
 go run . worker
 ```
 
-First run takes ~5 seconds to join the tailnet. You should see:
+First run takes ~5 seconds to register on the tailnet. You should see:
 
 ```
 joined tailnet as <your-user-id>-go-worker
@@ -141,31 +156,29 @@ connected to temporal at temporal-dev:7233 via tsnet
 Starting Go worker on task queue: <your-user-id>-hello-tsnet
 ```
 
-### Step 5: Confirm the worker is on the tailnet
+## Step 8: Confirm the Go worker is on the tailnet
 
-In the second terminal tab (same VM):
+In the **Starter** terminal:
 
 ```bash
-tailscale status | grep $WORKSHOP_USER_ID-go-worker
+tailscale status | grep -- '-go-worker'
 ```
 
-Your Go worker shows up as its own tailnet node, distinct from the VM.
+You should see a new row - `<your-user-id>-go-worker` - separate from the Exercise Environment itself. The worker is its own tailnet node with its own hostname and identity.
 
-### Step 6: Run the workflow
+## Step 9: Run the workflow
+
+Still in the **Starter** terminal:
 
 ```bash
+cd exercises/02_explore_tailscale/go-hello-tsnet/practice
 go run . starter
 ```
 
-Watch it appear in the Temporal UI.
+You should see your public IP address and location printed, same as Exercise 1 - but this time the worker that executed the activities was the Go `tsnet` worker, not a Python worker on the Exercise Environment.
 
-## What You've Learned
+## Step 10: Check the Temporal UI
 
-- How to discover machines on a Tailscale network
-- That Tailscale provides identity for free — no extra auth needed
-- How Aperture uses that identity to proxy and rate-limit API calls
-- How to embed Tailscale directly into a Go worker using tsnet
-- That the same Temporal workflow runs identically whether the worker joins via the system Tailscale client (Ex 1) or via tsnet (Ex 2 Part 3)
-- The full network path: Your VM → Tailscale → Temporal Server / Aperture → OpenAI
+Click the **Temporal UI** tab and find your `<your-user-id>-hello-tsnet` workflow. Click into it and look at the worker info on each activity: the task queue is `<your-user-id>-hello-tsnet`, and the worker identity reflects the Go process rather than the Python one from Exercise 1.
 
-Next up: you'll use Aperture to power an AI agent workflow.
+Same Temporal server, same workflow, different worker transport. `tsnet` is the building block the rest of the workshop uses to put workers and servers anywhere on the tailnet with no network wiring.
