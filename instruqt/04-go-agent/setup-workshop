@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euxo pipefail
+
+# Extend the sparse-checkout to include exercise 4.
+cd /root/workshop
+git sparse-checkout add '/exercises/04_go_agent/**'

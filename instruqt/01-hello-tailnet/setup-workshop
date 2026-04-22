@@ -2,8 +2,9 @@
 set -euxo pipefail
 
 # ============================================================
-# Challenge 1 Setup: Install tooling, clone repo, configure env
-# This runs once and sets up state for all subsequent challenges.
+# Challenge 1 Setup: Install tooling, sparse-clone ex1, configure env
+# Subsequent challenges extend the sparse-checkout to include their
+# exercise, so attendees only see the exercise they're working on.
 # ============================================================
 
 REPO_URL="https://github.com/temporal-community/workshop-tailscale-replay-2026.git"
@@ -11,9 +12,17 @@ WORKSHOP_DIR="/root/workshop"
 
 # --- Install system dependencies ---
 
-# Python 3.13 via deadsnakes PPA
 apt-get update -qq
 apt-get install -y -qq software-properties-common
+
+# libnss-resolve routes glibc hostname lookups through systemd-resolved
+# via NSS instead of the /etc/resolv.conf stub. This makes per-link
+# search domains (like tailscale0's tailnet suffix) apply to bare
+# names, so `temporal-dev` resolves via MagicDNS once the attendee is
+# on the tailnet.
+apt-get install -y -qq libnss-resolve
+
+# Python 3.13 via deadsnakes PPA
 add-apt-repository -y ppa:deadsnakes/ppa
 apt-get update -qq
 apt-get install -y -qq python3.13 python3.13-venv python3.13-dev
@@ -31,47 +40,96 @@ export PATH="/usr/local/go/bin:$PATH"
 curl -sSf https://temporal.download/cli.sh | sh
 export PATH="$HOME/.temporalio/bin:$PATH"
 
-# --- Connect to Tailscale ---
+# --- Install Tailscale client ---
+# Attendees run `tailscale up` themselves in the first challenge.
 
 curl -fsSL https://tailscale.com/install.sh | sh
-# tailscale up --authkey="${TS_AUTHKEY}" --hostname="workshop-$(hostname)"
 
-# Wait for Tailscale to be ready
-sleep 3
-tailscale status
+# --- Local reverse proxy for Instruqt service tabs ---
+# Instruqt `service` tabs proxy VM ports, not tailnet URLs, and render
+# the proxied site inside an iframe. Caddy listens on :8233 and :80,
+# forwards to temporal-dev:8233 and ai:80 over the tailnet, and strips
+# X-Frame-Options / Content-Security-Policy response headers so the
+# Temporal UI and Aperture UI can render inside Instruqt's iframe.
+# (Plain TCP forwarding via socat can't touch HTTP headers.)
 
-# --- Clone workshop repo ---
+apt-get install -y -qq caddy
+
+cat > /etc/caddy/Caddyfile << 'EOF'
+{
+    auto_https off
+}
+
+:8233 {
+    reverse_proxy temporal-dev:8233 {
+        header_down -X-Frame-Options
+        header_down -Content-Security-Policy
+    }
+}
+
+:80 {
+    reverse_proxy ai:80 {
+        header_down -X-Frame-Options
+        header_down -Content-Security-Policy
+    }
+}
+EOF
+
+systemctl restart caddy
+
+# --- Sparse-clone workshop repo (ex1 only) ---
+# Non-cone sparse-checkout with explicit patterns: only the workshop
+# essentials land on disk. Excludes LICENSE, justfile, mkdocs.yml,
+# docs/, scripts/, slides/, instruqt/, etc. Each subsequent challenge
+# runs `git sparse-checkout add <pattern>` to extend the view.
 
 if [ ! -d "$WORKSHOP_DIR" ]; then
-    git clone "$REPO_URL" "$WORKSHOP_DIR"
+    git clone --no-checkout "$REPO_URL" "$WORKSHOP_DIR"
+    cd "$WORKSHOP_DIR"
+    git sparse-checkout set --no-cone \
+        '/pyproject.toml' \
+        '/uv.lock' \
+        '/temporal.toml' \
+        '/exercises/01_hello_tailnet/**'
+    git checkout
 fi
 
 cd "$WORKSHOP_DIR"
 
-# --- Set up environment variables ---
+# --- Pick a per-attendee identifier ---
+# Prefer the attendee's Instruqt-registered name (lowercased, slugified).
+# Fall back to the opaque participant ID so every play has a unique ID
+# even when the invite didn't collect a name.
 
-WORKSHOP_USER_ID=$(hostname | tr '[:upper:]' '[:lower:]')
+if [ -n "${INSTRUQT_USER_NAME:-}" ]; then
+    WORKSHOP_USER_ID=$(printf '%s' "$INSTRUQT_USER_NAME" \
+        | tr '[:upper:]' '[:lower:]' \
+        | sed -e 's/[^a-z0-9]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//')
+else
+    WORKSHOP_USER_ID="${INSTRUQT_PARTICIPANT_ID:-unknown}"
+fi
+
+# --- Set up environment variables ---
 
 cat >> /root/.bashrc << EOF
 
 # Workshop environment variables
 export PATH="\$HOME/.local/bin:/usr/local/go/bin:\$HOME/.temporalio/bin:\$PATH"
-export TEMPORAL_PROFILE=tailnet
+# TEMPORAL_CONFIG_FILE points the SDK at the in-repo temporal.toml.
+# Note: TEMPORAL_PROFILE is intentionally NOT set. Without it the SDK
+# loads the default profile (localhost), which fails. Exercise 1's
+# TODO is to pass profile="tailnet" to load_client_connect_config().
+export TEMPORAL_CONFIG_FILE=${WORKSHOP_DIR}/temporal.toml
 export WORKSHOP_USER_ID=${WORKSHOP_USER_ID}
+export TS_AUTHKEY=${TS_AUTHKEY}
 # TODO: Update with actual Aperture endpoint from Kartik
 export OPENAI_BASE_URL=https://aperture.tailnet-name.ts.net/v1
 export OPENAI_API_KEY=workshop-token
 EOF
 
 # Source them for this script too
-export TEMPORAL_PROFILE=tailnet
+export TEMPORAL_CONFIG_FILE="${WORKSHOP_DIR}/temporal.toml"
 export WORKSHOP_USER_ID="${WORKSHOP_USER_ID}"
-
-# --- Create Temporal environment config ---
-# Note: We create the default profile only. The tailnet profile is the
-# exercise TODO — attendees will copy temporal.toml.example themselves.
-
-mkdir -p /root/.config/temporalio
 
 # --- Install Python dependencies ---
 

@@ -1,12 +1,8 @@
-version: 1
-sandboxes:
-- name: main
-  hosts:
-  - name: workshop
-    type: vm
-    image: ubuntu-2404
-    memory: 4096
-    cpus: 2
-    environment:
-      # TODO: Replace with actual Tailscale auth key for the workshop tailnet
-      TS_AUTHKEY: "tskey-auth-REPLACE-ME"
+version: "3"
+virtualmachines:
+- name: workshop
+  image: ubuntu-os-cloud/ubuntu-2404-lts-amd64
+  machine_type: n1-standard-2
+  shell: /bin/bash
+secrets:
+- name: TS_AUTHKEY

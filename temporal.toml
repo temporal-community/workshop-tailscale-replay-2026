@@ -1,10 +1,11 @@
 # Temporal Environment Configuration
 # Documentation: https://docs.temporal.io/develop/environment-configuration
 #
-# Copy this file to ~/.config/temporalio/temporal.toml
-# Then set TEMPORAL_PROFILE in your .env to choose which profile to use.
+# The SDK reads this file when TEMPORAL_CONFIG_FILE points at it, or
+# from ~/.config/temporalio/temporal.toml by default. Select a profile
+# with the TEMPORAL_PROFILE env var, or pass profile="..." in code.
 
-# Default profile — local development (Temporal server on your machine)
+# Default profile: local development (Temporal server on your machine)
 [profile.default]
 address = "localhost:7233"
 namespace = "default"
