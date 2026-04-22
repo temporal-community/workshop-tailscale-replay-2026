@@ -1,4 +1,4 @@
-package workshop
+package main
 
 import (
 	"time"
@@ -6,7 +6,7 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-func HealthCheckWorkflow(ctx workflow.Context) (string, error) {
+func HealthCheckWorkflow(ctx workflow.Context) (HealthReport, error) {
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 		StartToCloseTimeout: 30 * time.Second,
 	})
@@ -15,13 +15,13 @@ func HealthCheckWorkflow(ctx workflow.Context) (string, error) {
 
 	var metrics string
 	if err := workflow.ExecuteActivity(ctx, act.FetchMetrics).Get(ctx, &metrics); err != nil {
-		return "", err
+		return HealthReport{}, err
 	}
 
-	var summary string
-	if err := workflow.ExecuteActivity(ctx, act.AnalyzeMetrics, metrics).Get(ctx, &summary); err != nil {
-		return "", err
+	var report HealthReport
+	if err := workflow.ExecuteActivity(ctx, act.AnalyzeMetrics, metrics).Get(ctx, &report); err != nil {
+		return HealthReport{}, err
 	}
 
-	return summary, nil
+	return report, nil
 }

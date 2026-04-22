@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -9,22 +10,21 @@ import (
 	"strings"
 	"time"
 
+	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 	"tailscale.com/tsnet"
-
-	workshop "github.com/temporal-community/workshop-tailscale-replay-2026"
 )
 
 const (
-	defaultTemporalHost = "temporal-dev:7233"
-	defaultAIURL        = "http://ai"
-	defaultAIModel      = "claude-haiku-4-5"
-	taskQueue           = "health-check"
-	workflowID          = "health-check"
+	defaultTemporalHost   = "temporal-dev:7233"
+	defaultAIURL          = "http://ai"
+	defaultAIModel        = "claude-haiku-4-5"
+	defaultUserID         = "lab"
+	defaultCheckIntervalS = "10m"
 )
 
 func main() {
@@ -36,9 +36,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	userID := envOr("WORKSHOP_USER_ID", defaultUserID)
+	hostname := fmt.Sprintf("%s-metrics-worker", userID)
+	taskQueue := fmt.Sprintf("%s-health-check", userID)
+	workflowID := fmt.Sprintf("%s-health-check", userID)
+	scheduleID := fmt.Sprintf("%s-health-check-schedule", userID)
+
 	tsNode := &tsnet.Server{
-		Hostname: "lab-worker",
-		Dir:      filepath.Join(configDir, "lab-worker"),
+		Hostname: hostname,
+		Dir:      filepath.Join(configDir, "workshop-tsnet", hostname),
 		AuthKey:  os.Getenv("TS_AUTHKEY"),
 	}
 	if err := tsNode.Start(); err != nil {
@@ -53,7 +59,7 @@ func main() {
 		logger.Error("tsnet up", "err", err)
 		os.Exit(1)
 	}
-	logger.Info("joined tailnet", "hostname", "lab-worker")
+	logger.Info("joined tailnet", "hostname", hostname, "userID", userID)
 
 	temporalHost := envOr("TEMPORAL_HOST", defaultTemporalHost)
 	c, err := client.Dial(client.Options{
@@ -85,7 +91,7 @@ func main() {
 	logger.Info("connected to temporal", "host", temporalHost)
 
 	metricsURL := mustEnv(logger, "METRICS_URL")
-	acts := workshop.NewActivities(
+	acts := NewActivities(
 		tsNode.HTTPClient(),
 		metricsURL,
 		envOr("AI_URL", defaultAIURL),
@@ -101,21 +107,37 @@ func main() {
 	}
 
 	w := worker.New(c, taskQueue, worker.Options{})
-	w.RegisterWorkflow(workshop.HealthCheckWorkflow)
+	w.RegisterWorkflow(HealthCheckWorkflow)
 	w.RegisterActivity(acts)
 
-	startCtx, startCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer startCancel()
-	_, startErr := c.ExecuteWorkflow(startCtx, client.StartWorkflowOptions{
-		ID:           workflowID,
-		TaskQueue:    taskQueue,
-		CronSchedule: "* * * * *",
-	}, workshop.HealthCheckWorkflow)
-	if startErr != nil {
-		logger.Warn("start workflow (may already be running)", "id", workflowID, "err", startErr)
-	} else {
-		logger.Info("started cron workflow", "id", workflowID, "schedule", "* * * * *")
+	interval := healthCheckInterval(logger)
+
+	cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cleanupCancel()
+	if err := c.ScheduleClient().GetHandle(cleanupCtx, scheduleID).Delete(cleanupCtx); err != nil {
+		logger.Debug("no existing schedule to delete (ok)", "id", scheduleID, "err", err)
 	}
+
+	schedCtx, schedCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer schedCancel()
+	_, schedErr := c.ScheduleClient().Create(schedCtx, client.ScheduleOptions{
+		ID: scheduleID,
+		Spec: client.ScheduleSpec{
+			Intervals: []client.ScheduleIntervalSpec{{Every: interval}},
+		},
+		Action: &client.ScheduleWorkflowAction{
+			ID:        workflowID,
+			Workflow:  HealthCheckWorkflow,
+			TaskQueue: taskQueue,
+		},
+		TriggerImmediately: true,
+		Overlap:            enumspb.SCHEDULE_OVERLAP_POLICY_SKIP,
+	})
+	if schedErr != nil {
+		logger.Error("create schedule", "id", scheduleID, "err", schedErr)
+		os.Exit(1)
+	}
+	logger.Info("created schedule", "id", scheduleID, "interval", interval.String(), "workflow", workflowID)
 
 	logger.Info("worker running", "taskQueue", taskQueue)
 	if err := w.Run(worker.InterruptCh()); err != nil {
@@ -138,4 +160,15 @@ func mustEnv(logger *slog.Logger, key string) string {
 		os.Exit(1)
 	}
 	return v
+}
+
+func healthCheckInterval(logger *slog.Logger) time.Duration {
+	raw := envOr("HEALTH_CHECK_INTERVAL", defaultCheckIntervalS)
+	d, err := time.ParseDuration(raw)
+	if err != nil || d <= 0 {
+		logger.Warn("invalid HEALTH_CHECK_INTERVAL, using default", "value", raw, "default", defaultCheckIntervalS)
+		fallback, _ := time.ParseDuration(defaultCheckIntervalS)
+		return fallback
+	}
+	return d
 }

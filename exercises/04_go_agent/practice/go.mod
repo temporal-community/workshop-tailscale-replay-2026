@@ -1,4 +1,4 @@
-module github.com/temporal-community/workshop-tailscale-replay-2026
+module github.com/temporal-community/workshop-tailscale-replay-2026/exercises/04_go_agent
 
 go 1.26.1
 

@@ -1,4 +1,4 @@
-package workshop_test
+package main
 
 import (
 	"fmt"
@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"go.temporal.io/sdk/testsuite"
-
-	workshop "github.com/temporal-community/workshop-tailscale-replay-2026"
 )
 
 func TestHealthCheckWorkflow(t *testing.T) {
@@ -22,26 +20,28 @@ type workflowSuite struct {
 
 func (s *workflowSuite) Test_Completes() {
 	env := s.NewTestWorkflowEnvironment()
-	var act *workshop.Activities
+	var act *Activities
 	env.OnActivity(act.FetchMetrics, mock.Anything).Return("# metrics", nil)
-	env.OnActivity(act.AnalyzeMetrics, mock.Anything, mock.Anything).Return("System healthy.", nil)
+	env.OnActivity(act.AnalyzeMetrics, mock.Anything, mock.Anything).Return(HealthReport{Summary: "healthy"}, nil)
 
-	env.ExecuteWorkflow(workshop.HealthCheckWorkflow)
+	env.ExecuteWorkflow(HealthCheckWorkflow)
 
 	s.True(env.IsWorkflowCompleted())
 	s.NoError(env.GetWorkflowError())
-	var result string
+	var result HealthReport
 	s.NoError(env.GetWorkflowResult(&result))
-	s.Equal("System healthy.", result)
+	s.Equal("healthy", result.Summary)
 }
 
 func (s *workflowSuite) Test_FetchError_Propagates() {
 	env := s.NewTestWorkflowEnvironment()
-	var act *workshop.Activities
+	var act *Activities
 	env.OnActivity(act.FetchMetrics, mock.Anything).Return("", fmt.Errorf("connection refused"))
 
-	env.ExecuteWorkflow(workshop.HealthCheckWorkflow)
+	env.ExecuteWorkflow(HealthCheckWorkflow)
 
 	s.True(env.IsWorkflowCompleted())
-	s.Error(env.GetWorkflowError())
+	err := env.GetWorkflowError()
+	s.Error(err)
+	s.Contains(err.Error(), "connection refused")
 }

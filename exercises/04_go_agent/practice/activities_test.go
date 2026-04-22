@@ -1,4 +1,4 @@
-package workshop
+package main
 
 import (
 	"context"
@@ -26,7 +26,17 @@ func TestFetchMetrics(t *testing.T) {
 }
 
 func TestAnalyzeMetrics(t *testing.T) {
-	const wantSummary = "System looks healthy."
+	want := HealthReport{
+		Hostname: "test-host",
+		OS:       "Test OS 1.0",
+		CPU:      "8 cores",
+		RAM:      "16.0 GB",
+		Disk:     "500GB total, 250GB available",
+		Summary:  "System looks healthy.",
+	}
+	wantJSON, err := json.Marshal(want)
+	require.NoError(t, err)
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, http.MethodPost, r.Method)
 		require.Equal(t, "/v1/messages", r.URL.Path)
@@ -48,7 +58,7 @@ func TestAnalyzeMetrics(t *testing.T) {
 			"model":       "claude-haiku-4-5",
 			"stop_reason": "end_turn",
 			"content": []map[string]any{
-				{"type": "text", "text": wantSummary},
+				{"type": "text", "text": string(wantJSON)},
 			},
 			"usage": map[string]any{"input_tokens": 10, "output_tokens": 5},
 		})
@@ -58,7 +68,38 @@ func TestAnalyzeMetrics(t *testing.T) {
 	a := NewActivities(srv.Client(), "", srv.URL, "claude-haiku-4-5")
 	got, err := a.AnalyzeMetrics(context.Background(), "some metrics")
 	require.NoError(t, err)
-	require.Equal(t, wantSummary, got)
+	require.Equal(t, want, got)
+}
+
+func TestAnalyzeMetrics_StripsCodeFences(t *testing.T) {
+	want := HealthReport{
+		Hostname: "fenced-host",
+		Summary:  "ok",
+	}
+	wantJSON, err := json.Marshal(want)
+	require.NoError(t, err)
+	fencedResponse := "```json\n" + string(wantJSON) + "\n```"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"id":          "msg_test",
+			"type":        "message",
+			"role":        "assistant",
+			"model":       "claude-haiku-4-5",
+			"stop_reason": "end_turn",
+			"content": []map[string]any{
+				{"type": "text", "text": fencedResponse},
+			},
+			"usage": map[string]any{"input_tokens": 10, "output_tokens": 5},
+		})
+	}))
+	t.Cleanup(srv.Close)
+
+	a := NewActivities(srv.Client(), "", srv.URL, "claude-haiku-4-5")
+	got, err := a.AnalyzeMetrics(context.Background(), "some metrics")
+	require.NoError(t, err)
+	require.Equal(t, want, got)
 }
 
 func TestAnalyzeMetrics_AIError(t *testing.T) {
