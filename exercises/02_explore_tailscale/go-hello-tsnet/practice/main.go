@@ -92,14 +92,14 @@ func startTsnet(userID, mode string) *tsnet.Server {
 }
 
 // resolveNodeName returns a stable, per-machine node name of the form
-// "<userID>-go-<mode>-<suffix>". The 5-char lowercase-alpha suffix is
+// "<userID>-ex2-go-<mode>-<suffix>". The 5-char lowercase-alpha suffix is
 // generated once on first run and then reused on every subsequent run
 // (found by scanning workshop-tsnet/ for an existing dir with the same
 // prefix). Two attendees with the same WORKSHOP_USER_ID get different
 // suffixes, so their tailnet hostnames don't collide.
 func resolveNodeName(configDir, userID, mode string) (string, error) {
 	root := filepath.Join(configDir, "workshop-tsnet")
-	prefix := fmt.Sprintf("%s-go-%s-", userID, mode)
+	prefix := fmt.Sprintf("%s-ex2-go-%s-", userID, mode)
 
 	entries, err := os.ReadDir(root)
 	if err != nil && !os.IsNotExist(err) {

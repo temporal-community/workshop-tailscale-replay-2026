@@ -46,51 +46,36 @@ curl -s -o /dev/null -w "%{http_code}" http://temporal-dev:8233
 tailscale whois $(tailscale ip -4)
 ```
 
-This shows your identity on the tailnet. Aperture uses this identity to track your API usage — no API keys needed on your machine.
+This shows your identity on the tailnet, and that can be used by devices and applications on the tailnet to authenticate you.
 
 ## Part 2: Understanding Aperture
 
-<!-- ============================================================
-     KARTIK: This section is yours to fill.
+Aperture by Tailscale is a centralized AI gateway that secures, monitors, and routes LLM requests across your organization. Aperture uses Tailscale's identity layer (WhoIs) to automatically authenticate users, eliminating the need to distribute API keys. It routes requests to upstream LLM providers such as OpenAI, Anthropic, and Google without requiring changes to existing tools or workflows.
 
-     The attendees have:
-     - Verified Tailscale connectivity (Exercise 1)
-     - Explored the tailnet with CLI tools (Part 1 above)
-     - Seen their Tailscale identity
+There are four core mechanisms: identity and authentication, request routing by model, telemetry capture and session logging. Together, these enable auditing, cost awareness, and operational insight for letting teams safely adopt LLMs.
 
-     Suggested content for this section:
-     - How Aperture proxies API calls (architecture)
-     - How it identifies users (by Tailscale identity)
-     - Rate limiting configuration for this workshop
-     - Quick demo of the Aperture dashboard/metrics
-     - Any Tailscale Serve / Funnel demonstration
+**Identity and Authentication**: Traditional API proxies require clients to authenticate with tokens or API keys. Aperture eliminates this step by using Tailscale's identity layer where user identity is passed through headers from the client devices running Tailscale to Aperture that is also tailscale-aware and able to validate these headers and thus user identity. User identity itself is autheticated via an IDP and establishes a trusted identity within the tailnet.
 
-     Target time: ~10 minutes of this 15-minute exercise.
-     ============================================================ -->
+**Request Routing by Model**: When a request arrives, Aperture extracts the model name from the request body (for example, `claude-sonnet-4-6` or `gpt-4o`). The proxy looks up which provider serves that model and forwards the request to that provider's API endpoint, injecting the correct authentication headers. From the client's perspective, the proxy appears as if it were the LLM provider itself. Clients connect to the proxy URL and send standard API requests. The proxy handles the routing transparently.
 
-### How Aperture secures your LLM calls
+**Telemetry Capture**: The capture system records everything needed to reconstruct and analyze each LLM interaction including request and response headers and body, token counts by type (input,output,cached,reasoning), model name, request duration, tool use count, session context and other metadata. Related requests are grouped into sessions for easier analysis.
 
-*[Kartik to fill: explanation of Aperture's role as an API gateway]*
+**Extensibility using Webhooks**: Aperture provides a webhook mechanism that allows you to extend its functionality. You can use webhooks to integrate with external systems, perform custom logic, or trigger actions based on events. Some of the existing partners that have integrated with Aperture include [Oso](https://www.osohq.com/), [Cerbos](https://cerbos.dev/), and [Cribl](https://www.cribl.io/)
 
 ### Aperture endpoint
 
-The Aperture proxy is available at:
+The Aperture proxy is available on the workshop tailnet at:
 
 ```
-# TODO: Kartik to provide the actual endpoint URL
-https://aperture.<tailnet-name>.ts.net/v1
+http://ai
 ```
 
-This endpoint accepts OpenAI-compatible requests and forwards them to OpenAI with the shared API key. Your Tailscale identity is used to enforce per-user rate limits.
+This endpoint accepts OpenAI-compatible requests and forwards them to OpenAI with the shared API key. Your Tailscale identity is used to enforce per-user rate limits — no API key lives on your machine.
 
 ### Try it out
 
-*[Kartik to fill: optional curl command to test Aperture directly]*
-
 ```bash
-# Example (update with actual endpoint):
-# curl https://aperture.<tailnet-name>.ts.net/v1/models \
-#   -H "Authorization: Bearer <aperture-token>"
+curl http://ai/v1/models
 ```
 
 ## Part 3: Hello World in Go with tsnet
@@ -104,6 +89,8 @@ You're going to run the same geo-IP workflow from Exercise 1, but in Go, with th
 - **Self-contained binaries.** Ship a single Go binary that joins the tailnet — no apt install, no daemon, no separate `tailscale up`.
 - **Per-process identity.** The worker is its own node on the tailnet, with its own hostname, its own ACL-eligible identity. The VM it runs on doesn't need to be on the tailnet at all.
 - **Same tailnet, different door.** The `temporal-dev` server doesn't care how you connect — system client or tsnet, the traffic is the same encrypted WireGuard.
+
+*Note: Aperture itself is a tsnet application, so it can join the tailnet just like any other workload running the tailscale client, as is the Temporal Dev server!
 
 ### How the code is laid out
 
@@ -130,7 +117,7 @@ go mod download
 Open `main.go`. Find TODO 1. Create a `tsnet.Server` with your own hostname and start it:
 
 ```go
-nodeName := fmt.Sprintf("%s-go-%s", userID, mode)
+nodeName := fmt.Sprintf("%s-ex2-go-%s-%s", userID, mode, randSuffix)
 tsNode := &tsnet.Server{
     Hostname: nodeName,
     Dir:      filepath.Join(configDir, "workshop-tsnet", nodeName),
@@ -149,7 +136,7 @@ if _, err := tsNode.Up(upCtx); err != nil {
 log.Printf("joined tailnet as %s", nodeName)
 ```
 
-The `Dir` field holds the tsnet state (node key, machine key). On first run it uses `TS_AUTHKEY` to register; on subsequent runs it reuses the stored identity.
+The `Dir` field holds the tsnet state (node key, machine key). On first run it uses `TS_AUTHKEY` to register; on subsequent runs it reuses the stored identity. The random 5-char suffix is generated once and persisted via the state dir — so two attendees with the same `WORKSHOP_USER_ID` land on different hostnames on the tailnet.
 
 ### Step 3: Complete TODO 2 — Dial Temporal through tsnet
 
@@ -184,7 +171,7 @@ go run . worker
 First run takes ~5 seconds to join the tailnet. You should see:
 
 ```
-joined tailnet as <your-user-id>-go-worker
+joined tailnet as <your-user-id>-ex2-go-worker-<5 random chars>
 Starting Go worker on task queue: <your-user-id>-hello-tsnet
 ```
 
@@ -193,7 +180,7 @@ Starting Go worker on task queue: <your-user-id>-hello-tsnet
 In another terminal:
 
 ```bash
-tailscale status | grep $WORKSHOP_USER_ID-go-worker
+tailscale status | grep $WORKSHOP_USER_ID-ex2-go-worker
 ```
 
 You should see your Go worker listed as its own node — distinct from the VM itself. That's tsnet.
@@ -212,7 +199,7 @@ The starter uses the same tsnet pattern to dial Temporal, fires `GetAddressFromI
 
 - The workflow and activities are the same shape — same two activities (`GetIP`, `GetLocationInfo`), same pattern.
 - The language is Go instead of Python.
-- The worker's network identity is different: it's `<user>-go-worker` on the tailnet, not the VM's hostname.
+- The worker's network identity is different: it's `<user>-ex2-go-worker-<suffix>` on the tailnet, not the VM's hostname.
 - No system Tailscale client is involved in this worker's path.
 
 This is the pattern Exercise 4 (stretch) uses to run a Go agent with Aperture. Same `tsNode.Dial` trick, different workflow.

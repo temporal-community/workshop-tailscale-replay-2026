@@ -100,8 +100,8 @@ Open `exercises/02_explore_tailscale/go-hello-tsnet/practice/main.go` in the Cod
 
 ```go
 tsNode := &tsnet.Server{
-    Hostname: fmt.Sprintf("%s-go-worker", userID),
-    Dir:      filepath.Join(configDir, "go-worker-"+userID),
+    Hostname: nodeName,
+    Dir:      filepath.Join(configDir, "workshop-tsnet", nodeName),
     AuthKey:  os.Getenv("TS_AUTHKEY"),
 }
 if err := tsNode.Start(); err != nil {
@@ -114,8 +114,10 @@ defer upCancel()
 if _, err := tsNode.Up(upCtx); err != nil {
     log.Fatalf("tsnet up: %v", err)
 }
-log.Printf("joined tailnet as %s-go-worker", userID)
+log.Printf("joined tailnet as %s", nodeName)
 ```
+
+`nodeName` is resolved to `<userID>-ex2-go-<mode>-<5 random chars>` by the `resolveNodeName` helper already in `main.go`. The random suffix is generated once and then reused via the state dir, so your worker and starter each land on a stable hostname that won't collide with another attendee using the same `WORKSHOP_USER_ID`.
 
 `Dir` holds the `tsnet` state (node key, machine key). First run uses `TS_AUTHKEY` to register the node; subsequent runs reuse the stored identity.
 
@@ -151,7 +153,7 @@ go run . worker
 First run takes ~5 seconds to register on the tailnet. You should see:
 
 ```
-joined tailnet as <your-user-id>-go-worker
+joined tailnet as <your-user-id>-ex2-go-worker-<5 random chars>
 connected to temporal at temporal-dev:7233 via tsnet
 Starting Go worker on task queue: <your-user-id>-hello-tsnet
 ```
@@ -161,10 +163,10 @@ Starting Go worker on task queue: <your-user-id>-hello-tsnet
 In the **Starter** terminal:
 
 ```bash
-tailscale status | grep -- '-go-worker'
+tailscale status | grep -- '-ex2-go-worker'
 ```
 
-You should see a new row - `<your-user-id>-go-worker` - separate from the Exercise Environment itself. The worker is its own tailnet node with its own hostname and identity.
+You should see a new row - `<your-user-id>-ex2-go-worker-<suffix>` - separate from the Exercise Environment itself. The worker is its own tailnet node with its own hostname and identity.
 
 ## Step 9: Run the workflow
 

@@ -27,8 +27,7 @@ cat >> ~/.bashrc << EOF
 # Workshop environment variables
 export TEMPORAL_PROFILE=tailnet
 export WORKSHOP_USER_ID=${WORKSHOP_USER_ID}
-# TODO: Update with actual Aperture endpoint from Kartik
-export OPENAI_BASE_URL=https://aperture.tailnet-name.ts.net/v1
+export OPENAI_BASE_URL=http://ai/v1
 export OPENAI_API_KEY=workshop-token
 EOF
 
