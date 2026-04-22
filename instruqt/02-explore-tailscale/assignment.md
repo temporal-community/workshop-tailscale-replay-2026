@@ -1,27 +1,41 @@
 ---
 slug: explore-tailscale
+id: jysnh4r6f6cu
 type: challenge
-title: "Explore Your Tailscale Network"
+title: Explore Your Tailscale Network
 teaser: Discover what's on the tailnet and understand how Aperture secures API calls
+notes:
+- type: text
+  contents: |-
+    # Exploring the Network
+
+    Now that you've proven the tailnet works, let's look under the hood.
+    You'll discover all the machines on the network and learn how
+    Aperture acts as a security gateway for LLM API calls.
+tabs:
+- id: fi2edgfrbxys
+  title: Code Editor
+  type: code
+  hostname: workshop
+  path: /root/workshop/exercises/02_explore_tailscale
+- id: 3rfluijsiy9t
+  title: Worker
+  type: terminal
+  hostname: workshop
+  workdir: /root/workshop
+- id: sx3uajfowyxv
+  title: Starter
+  type: terminal
+  hostname: workshop
+  workdir: /root/workshop
+- id: le7rxdsm3qqx
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
 difficulty: basic
 timelimit: 1200
-notes:
-  - type: text
-    contents: |-
-      # Exploring the Network
-
-      Now that you've proven the tailnet works, let's look under the hood.
-      You'll discover all the machines on the network and learn how
-      Aperture acts as a security gateway for LLM API calls.
-tabs:
-  - title: Terminal
-    type: terminal
-    hostname: workshop
-  - title: Temporal UI
-    type: service
-    hostname: workshop
-    port: 8233
-    url: http://temporal-dev:8233
+enhanced_loading: null
 ---
 
 # Exercise 2: Exploring Your Tailscale Network

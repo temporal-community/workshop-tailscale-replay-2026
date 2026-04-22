@@ -4,11 +4,8 @@ set -euxo pipefail
 source /root/.bashrc
 cd /root/workshop
 
-# Create the temporal.toml config
-mkdir -p /root/.config/temporalio
-cp temporal.toml.example /root/.config/temporalio/temporal.toml
-
-# Copy the solution files
+# Copy the solution files into practice so the workflow runs with the
+# correct profile and workflow ID.
 cp exercises/01_hello_tailnet/solution/*.py exercises/01_hello_tailnet/practice/
 
 # Run the worker in the background

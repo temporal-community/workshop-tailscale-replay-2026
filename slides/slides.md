@@ -298,12 +298,7 @@ Set `TEMPORAL_PROFILE=tailnet` and every worker, starter, and CLI command connec
 
 # Exercise 1: Commands
 
-1. **Copy the config.**
-
-    ```bash
-    mkdir -p ~/.config/temporalio
-    cp temporal.toml.example ~/.config/temporalio/temporal.toml
-    ```
+1. **Open `temporal.toml`** in the Code Editor. `TEMPORAL_CONFIG_FILE` already points the SDK at it. Two profiles: `default` (localhost) and `tailnet` (shared server).
 
 2. **Start the worker.**
 

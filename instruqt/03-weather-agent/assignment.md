@@ -1,31 +1,46 @@
 ---
 slug: weather-agent
+id: ubqh4feyxndc
 type: challenge
-title: "Python Weather Agent"
+title: Python Weather Agent
 teaser: Build a durable AI agent with LLM calls routed through Aperture
+notes:
+- type: text
+  contents: |-
+    # AI Agent Time
+
+    Now you'll build a durable AI weather agent. The LLM autonomously
+    chains tool calls — get your IP, geolocate it, fetch weather alerts —
+    all orchestrated by Temporal, all LLM calls secured through Aperture.
+tabs:
+- id: cd5f6dijn3vr
+  title: Code Editor
+  type: code
+  hostname: workshop
+  path: /root/workshop/exercises/03_weather_agent/practice
+- id: dz8wzkrpjtxa
+  title: Worker
+  type: terminal
+  hostname: workshop
+  workdir: /root/workshop
+- id: xnomxmss7f74
+  title: Starter
+  type: terminal
+  hostname: workshop
+  workdir: /root/workshop
+- id: ryto8syprq37
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
+- id: rxzw3xyphu9f
+  title: Aperture UI
+  type: service
+  hostname: workshop
+  port: 80
 difficulty: basic
 timelimit: 1500
-notes:
-  - type: text
-    contents: |-
-      # AI Agent Time
-
-      Now you'll build a durable AI weather agent. The LLM autonomously
-      chains tool calls — get your IP, geolocate it, fetch weather alerts —
-      all orchestrated by Temporal, all LLM calls secured through Aperture.
-tabs:
-  - title: Terminal
-    type: terminal
-    hostname: workshop
-  - title: Code Editor
-    type: code
-    hostname: workshop
-    path: /root/workshop/exercises/03_weather_agent/practice
-  - title: Temporal UI
-    type: service
-    hostname: workshop
-    port: 8233
-    url: http://temporal-dev:8233
+enhanced_loading: null
 ---
 
 # Exercise 3: Python Weather Agent

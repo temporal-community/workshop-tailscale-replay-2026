@@ -1,31 +1,47 @@
 ---
 slug: go-agent
+id: cngfnpse6nrs
 type: challenge
-title: "Go Agent (Stretch Goal)"
-teaser: Port the weather agent to Go — same Temporal server, same Aperture, different language
+title: Go Agent (Stretch Goal)
+teaser: Port the weather agent to Go — same Temporal server, same Aperture, different
+  language
+notes:
+- type: text
+  contents: |-
+    # Stretch Goal: Go Agent
+
+    This is a take-home challenge. The Go files are stubbed out with
+    TODOs. Use the Python implementation as your reference and build
+    the same weather agent in Go.
+tabs:
+- id: rtxkm5tpeory
+  title: Code Editor
+  type: code
+  hostname: workshop
+  path: /root/workshop/exercises/04_go_agent/practice
+- id: ojtn3trxjmsm
+  title: Worker
+  type: terminal
+  hostname: workshop
+  workdir: /root/workshop
+- id: 2dllsneptu75
+  title: Starter
+  type: terminal
+  hostname: workshop
+  workdir: /root/workshop
+- id: vbmyarbcjzjs
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
+- id: c4xnvxeanmfp
+  title: Aperture UI
+  type: service
+  hostname: workshop
+  port: 80
 difficulty: advanced
 timelimit: 1800
-notes:
-  - type: text
-    contents: |-
-      # Stretch Goal: Go Agent
-
-      This is a take-home challenge. The Go files are stubbed out with
-      TODOs. Use the Python implementation as your reference and build
-      the same weather agent in Go.
-tabs:
-  - title: Terminal
-    type: terminal
-    hostname: workshop
-  - title: Code Editor
-    type: code
-    hostname: workshop
-    path: /root/workshop/exercises/04_go_agent/practice
-  - title: Temporal UI
-    type: service
-    hostname: workshop
-    port: 8233
-    url: http://temporal-dev:8233
+enhanced_loading: null
 ---
 
 # Exercise 4: Go Agent (Stretch Goal)

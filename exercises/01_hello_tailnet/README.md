@@ -30,16 +30,15 @@ uv run scripts/verify_setup.py
 
 All dependency checks should pass. The Temporal connectivity check will fail, that's expected, you haven't configured the connection yet.
 
-### Step 2: Complete TODO 1 - Create the Temporal config file
+### Step 2: Open the Temporal config file
 
-Create the file `~/.config/temporalio/temporal.toml` (you can copy the template from the repo root):
+The `temporal.toml` file is at the repo root. The SDK reads it when `TEMPORAL_CONFIG_FILE` points at it (the Instruqt setup does this automatically). If you're running outside Instruqt, set:
 
 ```bash
-mkdir -p ~/.config/temporalio
-cp temporal.toml.example ~/.config/temporalio/temporal.toml
+export TEMPORAL_CONFIG_FILE="$(pwd)/temporal.toml"
 ```
 
-Open the file and verify it has the `tailnet` profile pointing to the shared server:
+Open `temporal.toml` and verify it has a `tailnet` profile pointing to the shared server:
 
 ```toml
 [profile.tailnet]
@@ -103,4 +102,4 @@ temporal --profile tailnet workflow list
 
 ## Stuck?
 
-Check the `solution/` directory for the completed code, and `temporal.toml.example` in the repo root for the config file.
+Check the `solution/` directory for the completed code, and `temporal.toml` in the repo root for the config file.
