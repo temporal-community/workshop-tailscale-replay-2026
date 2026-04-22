@@ -97,6 +97,10 @@ Pick (1) if your audience are pro devs with their own accounts. Pick (2) if you 
 - [ ] Auth key queued up for sharing (QR code printed, or paste-ready in chat)
 - [ ] Slides open
 
+## Slides
+
+The deck lives at `slides/slides.md` and runs under Slidev. See [Present the slides](slides.md) for installing pnpm, running the deck, presenter mode, and exporting to PDF.
+
 ## Backup plan
 
 If the shared server fails mid-workshop:

@@ -5,7 +5,7 @@ info: |
   ## Replay 2026 Workshop
   A hands-on workshop on securing AI agent infrastructure with
   Tailscale networking and Aperture API gateway, powered by Temporal.
-author: Mason Egger & Kartik Venugopal
+author: Mason Egger & Kartik Bharath
 keywords: temporal,tailscale,aperture,ai,agents
 colorSchema: dark
 fonts:
@@ -37,10 +37,13 @@ layout: two-cols
 # About Us
 
 ### Mason Egger
-Developer Advocate, **Temporal**
+Senior Solutions Architect, **Temporal**
 
-Builder of workshops, CLI tooling, and
-educational content for the Temporal ecosystem.
+"On my business card I am a Solutions Architect. In
+my mind I am a programmer. But in my heart I am a
+teacher."
+
+PSF Fellow. President of the PyTexas Foundation.
 
 ::right::
 
@@ -57,20 +60,14 @@ Quick intros. We'll keep it brief since we have a lot to build today.
 
 ---
 
-# What We're Building Today
+# What You'll Learn Today
 
 <br>
 
-A **durable AI weather agent** that:
-
-- Uses **Temporal** to orchestrate an agentic tool-calling loop
-- Runs on a **Tailscale** private network - no public internet exposure
-- Routes all LLM calls through **Aperture** for rate limiting and key management
-- Works across everyone's machines - all hitting one shared Temporal server
-
-<br>
-
-> You will **not** need an OpenAI API key. Aperture handles that.
+1. Put a Temporal dev server on a tailnet so workers, starters, and the Web UI are reachable across machines, no VPN, firewall rules, or port forwarding.
+2. Use one config file to point workers at local, remote, or tailnet Temporal servers, with nothing hardcoded.
+3. Route calls to a shared API key through a gateway that rate-limits by Tailscale identity, so nobody sees the key and nobody burns the budget.
+4. Wrap an agent loop in a Temporal workflow so it survives crashes, retries, and rate limits, then run the same pattern in Python and Go.
 
 ---
 
@@ -94,6 +91,11 @@ AI applications in production need more than just "call the LLM":
 Today we solve all four.
 
 </v-click>
+
+---
+layout: toc
+current: arch
+---
 
 ---
 layout: section
@@ -172,26 +174,67 @@ Your LLM calls go to Aperture's endpoint instead of `api.openai.com`. Aperture f
 </v-click>
 
 ---
+layout: two-cols
+---
+
+# From `start-dev` to `ts-net`
+
+Normally you run a local Temporal dev server with the Temporal CLI:
+
+```bash
+temporal server start-dev
+```
+
+That gives you:
+
+- `localhost:7233` gRPC
+- `localhost:8233` Web UI
+
+Only the machine running it can reach it.
+
+::right::
+
+<br>
+
+We built a CLI **extension** that wraps the same dev server in tsnet:
+
+```bash
+temporal ts-net
+```
+
+That gives you:
+
+- `temporal-dev:7233` on the tailnet
+- `temporal-dev:8233` on the tailnet
+
+Anyone on the tailnet can reach it, nobody else can.
+
+---
 
 # temporal-ts-net
 
-How the Temporal dev server got on the tailnet:
+How the workshop server is running right now:
 
 ```bash
 temporal ts-net \
     --db-filename /var/lib/temporal/workshop.db \
-    --max-connections 2000 \
-    --connection-rate-limit 200
+    --max-connections 500 \
+    --connection-rate-limit 50
 ```
 
 <v-clicks>
 
-- **Temporal CLI extension** - runs `temporal server start-dev` and proxies it onto the tailnet
+- **Temporal CLI extension** - runs `temporal server start-dev` and joins it to the tailnet
 - **No public exposure** - the server is only reachable via Tailscale
 - **Supports gRPC + Web UI** - `temporal-dev:7233` and `temporal-dev:8233`
 - **Built with tsnet** - Go library for embedding Tailscale in applications
 
 </v-clicks>
+
+---
+layout: toc
+current: ex1
+---
 
 ---
 layout: section
@@ -255,32 +298,28 @@ Set `TEMPORAL_PROFILE=tailnet` and every worker, starter, and CLI command connec
 
 # Exercise 1: Commands
 
-<br>
+1. **Copy the config.**
 
-### Copy the config
+    ```bash
+    mkdir -p ~/.config/temporalio
+    cp temporal.toml.example ~/.config/temporalio/temporal.toml
+    ```
 
-```bash
-mkdir -p ~/.config/temporalio
-cp temporal.toml.example ~/.config/temporalio/temporal.toml
-```
+2. **Start the worker.**
 
-### Start the worker
+    ```bash
+    cd exercises/01_hello_tailnet/practice
+    uv run worker.py
+    ```
 
-```bash
-cd exercises/01_hello_tailnet/practice
-uv run worker.py
-```
+3. **Run the workflow.**
 
-### Run the workflow
+    ```bash
+    cd exercises/01_hello_tailnet/practice
+    uv run starter.py
+    ```
 
-```bash
-cd exercises/01_hello_tailnet/practice
-uv run starter.py
-```
-
-### Check the Temporal UI
-
-Open **http://temporal-dev:8233** and find your workflow.
+4. **Check the UI** at **http://temporal-dev:8233**.
 
 ---
 layout: exercise
@@ -291,6 +330,11 @@ minutes: 15
 Create `temporal.toml`, add your user ID, run the geo-IP workflow.
 
 Open the Temporal UI and find your workflow.
+
+---
+layout: toc
+current: ex2
+---
 
 ---
 layout: section
@@ -329,14 +373,14 @@ tailscale whois $(tailscale ip -4)   # Your identity
 ```mermaid {scale: 0.8}
 sequenceDiagram
   autonumber
-  participant VM as Your VM
+  participant Worker as Your Worker
   participant AP as Aperture
   participant OAI as OpenAI
-  VM->>AP: POST /v1/responses<br/>(no API key needed)
-  Note over AP: Identity: your-vm<br/>Rate: 3 / 10 requests
+  Worker->>AP: POST /v1/responses<br/>(no API key needed)
+  Note over AP: Identity: your-worker<br/>Rate: 3 / 10 requests
   AP->>OAI: POST /v1/responses<br/>Authorization: Bearer sk-real-openai-key
   OAI-->>AP: response
-  AP-->>VM: response
+  AP-->>Worker: response
 ```
 
 ---
@@ -348,6 +392,11 @@ minutes: 15
 Explore your Tailscale network.
 
 Run `tailscale status`, ping the server, check your identity.
+
+---
+layout: toc
+current: agents
+---
 
 ---
 layout: section
@@ -460,6 +509,11 @@ The tool execution activities (weather, IP, location) call **free public APIs** 
 </v-click>
 
 ---
+layout: toc
+current: ex3
+---
+
+---
 layout: section
 ---
 
@@ -467,20 +521,18 @@ layout: section
 
 ---
 
-# Exercise 3: Three TODOs
+# Exercise 3: TODO 1
 
 <br>
 
-### TODO 1 - Route LLM calls through Aperture
+1. **Route LLM calls through Aperture.** In `activities.py`, add `base_url` to the OpenAI client:
 
-`activities.py` - add `base_url` to the OpenAI client:
-
-```python
-client = AsyncOpenAI(
-    max_retries=0,
-    base_url=os.getenv("OPENAI_BASE_URL"),
-)
-```
+    ```python
+    client = AsyncOpenAI(
+        max_retries=0,
+        base_url=os.getenv("OPENAI_BASE_URL"),
+    )
+    ```
 
 <br>
 
@@ -493,29 +545,25 @@ uv run starter.py "Weather alerts in California?"  # Terminal 2
 
 ---
 
-# Exercise 3: Enable the Agentic Loop
+# Exercise 3: TODOs 2 and 3
 
 <br>
 
-### TODO 2 - Turn on the loop
+2. **Turn on the loop.** In `agent_workflow.py`, change `False` to `True`:
 
-`agent_workflow.py` - change `False` to `True`:
+    ```python
+    while True:  # was: while False
+    ```
 
-```python
-while True:  # was: while False
-```
+3. **Execute the dynamic activity.** Wire up the tool execution in the same file:
 
-### TODO 3 - Execute the dynamic activity
-
-Same file - wire up the tool execution:
-
-```python
-tool_result = await workflow.execute_activity(
-    item.name,
-    args,
-    start_to_close_timeout=timedelta(seconds=30),
-)
-```
+    ```python
+    tool_result = await workflow.execute_activity(
+        item.name,
+        args,
+        start_to_close_timeout=timedelta(seconds=30),
+    )
+    ```
 
 ---
 
@@ -542,12 +590,17 @@ uv run starter.py --agent "What's the weather like where I am?"
 ---
 layout: exercise
 heading: Exercise 3
-minutes: 25
+minutes: 15
 ---
 
 Complete the 3 TODOs. Run the tool-calling workflow first, then enable the agentic loop.
 
 Watch the multi-step reasoning in the Temporal UI.
+
+---
+layout: toc
+current: ratelimit
+---
 
 ---
 layout: section
@@ -581,10 +634,15 @@ uv run starter.py --agent "What's the weather like where I am?"
 <!-- KARTIK: Show the Aperture dashboard here -->
 
 ---
+layout: toc
+current: tsnet
+---
+
+---
 layout: section
 ---
 
-# temporal-ts-net & Go Agent
+# temporal-ts-net and Go Agent
 
 ---
 
@@ -617,9 +675,9 @@ for {
 
 ---
 
-# Go Agent Preview
+# Exercise 4: Go Agent Preview
 
-**Exercise 4.** Same weather agent, in Go. Take-home stretch goal.
+**Exercise 4.** Same weather agent, in Go.
 
 ```go
 func AgentWorkflow(ctx workflow.Context, input string) (string, error) {
@@ -639,6 +697,11 @@ func AgentWorkflow(ctx workflow.Context, input string) (string, error) {
 ```
 
 Same Temporal server. Same Aperture endpoint. Same tailnet. Different language.
+
+---
+layout: toc
+current: wrap
+---
 
 ---
 layout: section
@@ -711,7 +774,3 @@ layout: end
 **Mason Egger**, mason.egger@temporal.io
 
 **Kartik Bharath**, *[email]*
-
-<br>
-
-Exercise 4 (Go Agent) is a take-home stretch goal. The files are stubbed and ready.

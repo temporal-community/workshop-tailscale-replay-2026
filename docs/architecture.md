@@ -80,7 +80,7 @@ The LLM reasons through multiple steps on its own. The workshop's weather agent 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant VM as Attendee VM
+  participant VM as Your Worker
   participant AP as Aperture
   participant OAI as OpenAI
   VM->>AP: POST /v1/responses<br/>(no API key needed)

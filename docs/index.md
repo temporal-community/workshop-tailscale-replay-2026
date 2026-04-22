@@ -46,6 +46,12 @@ If you are *attending* a session, the [GitHub README](https://github.com/tempora
 
     [Infrastructure](infrastructure.md) covers the persistent VPS that runs `temporal-ts-net` and the Tailscale and Aperture pieces behind it.
 
+- **I just want to run the slides**
+
+    ---
+
+    [Present the slides](slides.md) covers installing pnpm, running the deck locally, presenter mode, and exporting to PDF.
+
 </div>
 
 ## Source material

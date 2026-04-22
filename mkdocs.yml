@@ -85,6 +85,7 @@ nav:
   - Teach the workshop:
       - With Instruqt: run-with-instruqt.md
       - Without Instruqt: run-without-instruqt.md
+      - Present the slides: slides.md
   - Infrastructure:
       - Persistent setup: infrastructure.md
 

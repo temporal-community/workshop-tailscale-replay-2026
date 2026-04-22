@@ -108,6 +108,7 @@ body,
 .slidev-layout ul,
 .slidev-layout ol {
   padding-left: 1.25rem;
+  margin: 0.4rem 0;
 }
 .slidev-layout ul > li {
   position: relative;
@@ -124,6 +125,23 @@ body,
   height: 1px;
   background: var(--temporal-green);
   opacity: 0.9;
+}
+.slidev-layout ol {
+  list-style: decimal-leading-zero outside;
+  padding-left: 3.5rem;
+}
+.slidev-layout ol > li {
+  padding-left: 0.5rem;
+  margin: 0.35rem 0;
+}
+.slidev-layout ol > li > pre.shiki,
+.slidev-layout ol > li > div[class*="language-"] > pre {
+  margin: 0.25rem 0;
+}
+.slidev-layout ol > li::marker {
+  color: var(--temporal-green);
+  font-variant-numeric: tabular-nums;
+  font-weight: 300;
 }
 
 .slidev-layout blockquote {

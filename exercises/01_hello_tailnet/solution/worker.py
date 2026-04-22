@@ -17,7 +17,7 @@ TASK_QUEUE = f"{USER_ID}-hello-tailnet"
 
 
 async def main() -> None:
-    config = ClientConfig.load_client_connect_config()
+    config = ClientConfig.load_client_connect_config(profile="tailnet")
     logging.info(f"Connecting to Temporal at {config.get('target_host')}")
     client = await Client.connect(**config)
 

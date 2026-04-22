@@ -31,12 +31,12 @@ Every LLM call goes through Aperture, which holds the real OpenAI key and applie
 | Exercise 1 - Hello Tailnet | 15 min |
 | Exercise 2 - Explore Tailscale + Aperture | 15 min |
 | AI agents on Temporal (talk) | 10 min |
-| Exercise 3 - Weather agent | 25 min |
+| Exercise 3 - Weather agent | 15 min |
 | Rate-limit demo (everyone fires at once) | 5 min |
-| `temporal-ts-net` + Go agent preview | 5 min |
+| Exercise 4 (Go agent) + `temporal-ts-net` walk-through | 15 min |
 | Wrap-up + Q&A | 5 min |
 
-Exercise 4 (the Go agent) is a take-home stretch goal. Files are stubbed and ready.
+Exercise 4 translates the weather agent to Go, reusing the same Temporal server, Aperture endpoint, and tailnet.
 
 ## What attendees need
 
