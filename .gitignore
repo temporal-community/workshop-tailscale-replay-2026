@@ -211,10 +211,12 @@ __marimo__/
 *.exe
 *.test
 *.out
+exercises/04_go_agent/practice/04_go_agent
 
 # Tailscale tsnet state (contains auth keys / node private keys)
 /lab-worker/
 **/lab-worker/
+**/workshop-tsnet/
 
 # Auth keys / secrets
 *.env
