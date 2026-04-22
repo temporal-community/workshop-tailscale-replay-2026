@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://temporal-community.github.io/workshop-tailscale-replay-2026/</loc>
+         <lastmod>2026-04-22</lastmod>
+    </url>
+    <url>
+         <loc>https://temporal-community.github.io/workshop-tailscale-replay-2026/architecture/</loc>
+         <lastmod>2026-04-22</lastmod>
+    </url>
+    <url>
+         <loc>https://temporal-community.github.io/workshop-tailscale-replay-2026/infrastructure/</loc>
+         <lastmod>2026-04-22</lastmod>
+    </url>
+    <url>
+         <loc>https://temporal-community.github.io/workshop-tailscale-replay-2026/run-with-instruqt/</loc>
+         <lastmod>2026-04-22</lastmod>
+    </url>
+    <url>
+         <loc>https://temporal-community.github.io/workshop-tailscale-replay-2026/run-without-instruqt/</loc>
+         <lastmod>2026-04-22</lastmod>
+    </url>
+    <url>
+         <loc>https://temporal-community.github.io/workshop-tailscale-replay-2026/slides/</loc>
+         <lastmod>2026-04-22</lastmod>
+    </url>
+    <url>
+         <loc>https://temporal-community.github.io/workshop-tailscale-replay-2026/try-it-locally/</loc>
+         <lastmod>2026-04-22</lastmod>
+    </url>
+    <url>
+         <loc>https://temporal-community.github.io/workshop-tailscale-replay-2026/workshop-overview/</loc>
+         <lastmod>2026-04-22</lastmod>
+    </url>
+</urlset>
