@@ -152,23 +152,17 @@ The `Dir` field holds the tsnet state (node key, machine key). On first run it u
 
 ### Step 3: Complete TODO 2 — Dial Temporal through tsnet
 
-The Temporal SDK opens a gRPC connection to `temporal-dev:7233`. To route that through the tailnet, inject a custom `ContextDialer` that calls `tsNode.Dial`:
+The Temporal SDK opens a gRPC connection to `temporal-dev:7233`. To route that through the tailnet, add a `grpc.WithContextDialer` option that calls `tsNode.Dial`.
+
+Inside `dialTemporal`, find the `dialOptions` slice and insert this at the top (where the `// TODO 2` comment is):
 
 ```go
-c, err := client.Dial(client.Options{
-    HostPort: "temporal-dev:7233",
-    ConnectionOptions: client.ConnectionOptions{
-        DialOptions: []grpc.DialOption{
-            grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
-                return tsNode.Dial(ctx, "tcp", addr)
-            }),
-            grpc.WithTransportCredentials(insecure.NewCredentials()),
-        },
-    },
-})
+grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+    return tsNode.Dial(ctx, "tcp", addr)
+}),
 ```
 
-This is the whole trick: every byte the SDK wants to send goes through `tsNode.Dial`, which routes it over the tailnet.
+The surrounding `client.Dial(...)` call already passes `dialOptions` into `ConnectionOptions.DialOptions` — no other changes needed. Every byte the SDK sends now goes through `tsNode.Dial`, routed over the tailnet.
 
 ### Step 4: Run the worker
 
