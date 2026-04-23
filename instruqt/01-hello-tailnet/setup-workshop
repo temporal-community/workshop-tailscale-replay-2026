@@ -101,18 +101,12 @@ cd "$WORKSHOP_DIR"
 # Fall back to the opaque participant ID so every play has a unique ID
 # even when the invite didn't collect a name.
 
-WORKSHOP_USER_ID=""
 if [ -n "${INSTRUQT_USER_NAME:-}" ]; then
     WORKSHOP_USER_ID=$(printf '%s' "$INSTRUQT_USER_NAME" \
         | tr '[:upper:]' '[:lower:]' \
         | sed -e 's/[^a-z0-9]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//')
-fi
-if [ -z "$WORKSHOP_USER_ID" ] && [ -n "${INSTRUQT_PARTICIPANT_ID:-}" ]; then
-    WORKSHOP_USER_ID="$INSTRUQT_PARTICIPANT_ID"
-fi
-if [ -z "$WORKSHOP_USER_ID" ]; then
-    echo "ERROR: could not derive WORKSHOP_USER_ID — INSTRUQT_USER_NAME and INSTRUQT_PARTICIPANT_ID are both empty." >&2
-    exit 1
+else
+    WORKSHOP_USER_ID="${INSTRUQT_PARTICIPANT_ID:-unknown}"
 fi
 
 # --- Set up environment variables ---
