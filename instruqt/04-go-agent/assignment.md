@@ -158,7 +158,7 @@ go test ./...
 
 ## What you've learned
 
-- `tsnet.Dial` works for both tailnet-internal HTTP (metrics) and gRPC (Temporal)
-- Aperture is model-agnostic: the same gateway proxies Anthropic here and OpenAI in Exercise 3
+- `tsnet.Dial` works for both tailnet-internal HTTP (metrics) and gRPC (Temporal) calls
+- Aperture supports multiple LLM backends: Anthropic here, OpenAI in Exercise 3
 - Temporal Schedules with `TriggerImmediately` fire once on creation, then every N, with the next fire visible in the UI
 - All three backing services (Temporal, metrics, Aperture) are tailnet-only; Tailscale identity is the auth layer — no keys on your machine

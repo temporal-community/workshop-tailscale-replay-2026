@@ -114,7 +114,7 @@ Open `activities.go`, find `AnalyzeMetrics`. Change the prompt: request a differ
 
 ## What You've Learned
 
-- `tsnet.Dial` works for both tailnet-internal HTTP and gRPC
-- Aperture is model-agnostic: Anthropic here, OpenAI in Exercise 3
+- `tsnet.Dial` works for both tailnet-internal HTTP and gRPC calls
+- Aperture supports multiple LLM backends: Anthropic here, OpenAI in Exercise 3
 - Temporal Schedules with `TriggerImmediately` fire now, then every N, with the next fire visible in the UI
 - All three backing services are tailnet-only; Tailscale identity is the auth layer
