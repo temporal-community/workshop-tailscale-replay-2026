@@ -23,7 +23,6 @@ const (
 	defaultTemporalHost   = "temporal-dev:7233"
 	defaultApertureURL    = "http://ai"
 	defaultAIModel        = "claude-haiku-4-5"
-	defaultUserID         = "lab"
 	defaultCheckIntervalS = "10m"
 )
 
@@ -36,7 +35,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	userID := envOr("WORKSHOP_USER_ID", defaultUserID)
+	userID := os.Getenv("WORKSHOP_USER_ID")
+	if userID == "" {
+		logger.Error("WORKSHOP_USER_ID is not set — open a new terminal or run `source ~/.bashrc` (Instruqt sets this automatically for all workshop shells)")
+		os.Exit(1)
+	}
 	hostname := fmt.Sprintf("%s-metrics-worker", userID)
 	taskQueue := fmt.Sprintf("%s-health-check", userID)
 	workflowID := fmt.Sprintf("%s-health-check", userID)

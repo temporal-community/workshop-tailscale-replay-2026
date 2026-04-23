@@ -16,7 +16,7 @@ with workflow.unsafe.imports_passed_through():
 class ToolCallingWorkflow:
     @workflow.run
     async def run(self, input: str) -> str:
-        input_list = [{"role": "user", "content": input}]
+        input_list = [{"type": "message", "role": "user", "content": input}]
 
         system_instructions = "if no tools seem to be needed, respond in haikus."
 

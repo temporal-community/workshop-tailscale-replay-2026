@@ -16,7 +16,12 @@ from temporalio.envconfig import ClientConfig
 from temporalio.worker import Worker
 from tool_calling_workflow import ToolCallingWorkflow
 
-USER_ID = os.getenv("WORKSHOP_USER_ID", "unknown")
+USER_ID = os.getenv("WORKSHOP_USER_ID")
+if not USER_ID:
+    raise SystemExit(
+        "WORKSHOP_USER_ID is not set. Open a new terminal or run `source ~/.bashrc` — "
+        "Instruqt sets this automatically for all workshop shells."
+    )
 TOOL_CALLING_TASK_QUEUE = f"{USER_ID}-tool-calling"
 AGENT_TASK_QUEUE = f"{USER_ID}-agent"
 

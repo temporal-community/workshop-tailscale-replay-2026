@@ -51,7 +51,7 @@ class AgentWorkflow:
                 workflow.logger.info(f"No tools chosen, responding with a message: {result.output_text}")
                 return result.output_text
 
-        return "Agent loop is not enabled. Complete TODO 4 to fix this."
+        return "Agent loop is not enabled. Complete TODO 2 to fix this."
 
     async def _handle_function_call(self, item, result, input_list):
         """Execute a tool call chosen by the LLM using dynamic activities."""
