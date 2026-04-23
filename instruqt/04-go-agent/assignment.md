@@ -69,9 +69,10 @@ The same `tsnet` pattern from Exercise 2, but against real services: pull `node_
 │                  │ ─────────► │ metrics-server     │
 │                  │            │ (node_exporter)    │
 │                  │  tailnet   └────────────────────┘
-│                  │            ┌────────────────────┐
-│                  │ ─────────► │ Aperture (http://ai│
-└──────────────────┘            └────────────────────┘
+│                  │            ┌────────────────────┐   ┌─────────────────┐
+│                  │ ─────────► │ Aperture (http://ai│ ► │ Anthropic API   │
+└──────────────────┘            │ shared LLM gateway) │  │ (shared key)    │
+                                └────────────────────┘   └─────────────────┘
 ```
 
 The worker joins the tailnet *itself* via `tsnet` (just like Exercise 2), but this time its HTTP client reaches a real `metrics-server` node and its LLM calls go through Aperture to Claude. All three destinations are on the workshop tailnet — no public endpoints.

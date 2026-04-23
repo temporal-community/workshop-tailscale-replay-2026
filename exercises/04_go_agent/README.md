@@ -1,16 +1,16 @@
 # Exercise 4: Metrics Watcher
 
 A finished Go worker that joins the tailnet via `tsnet`, scrapes
-`node_exporter` metrics from a pre-provisioned `metrics-server` VM, and
+`node_exporter` metrics from a pre-provisioned VM, and
 asks Claude (via Aperture) for a plain-English health summary on a
 schedule.
 
 ## Goal
 
-Run the Exercise 2 `tsnet` pattern against real services: pull
+Run the Exercise 2 `tsnet` pattern against a quick, real-world use-case: pull
 `node_exporter` metrics off the tailnet, summarize them with Claude
 via Aperture, and schedule the whole thing with Temporal. The code is
-complete. Run it, tune the cadence, watch the runs in the Temporal UI.
+complete. Run it, and watch the runs in the Temporal UI.
 
 ## Background
 
@@ -22,9 +22,11 @@ flowchart LR
   TS[Temporal Dev Server<br/>temporal-dev:7233 / :8233]
   MS[metrics-server<br/>node_exporter :9100]
   AP[Aperture<br/>API Gateway]
+  CLA[Anthropic API<br/>shared key]
   VM <-. Tailnet .-> TS
   VM <-. Tailnet .-> MS
   VM <-. Tailnet .-> AP
+  AP --> CLA
 ```
 
 ### What's different from Exercise 2
@@ -39,7 +41,6 @@ flowchart LR
 - `main.go`: joins the tailnet via `tsnet`, dials Temporal, creates the Schedule.
 - `activities.go`: `FetchMetrics` and `AnalyzeMetrics` (returns `HealthReport`).
 - `workflow.go`: `HealthCheckWorkflow` chains the two activities.
-- Tests: run offline with `go test ./...`.
 
 ## Run it
 
@@ -79,7 +80,7 @@ Open `http://temporal-dev:8233`. Two places to look:
 
 ### Step 4: Tune the cadence
 
-10m is too slow to watch during the workshop. `Ctrl+C`, restart with a shorter interval:
+10m is too slow to watch during the workshop. Stop the worker with `Ctrl+C`, then restart with a shorter interval:
 
 ```bash
 HEALTH_CHECK_INTERVAL=2m \
@@ -108,14 +109,6 @@ Open `activities.go`, find `AnalyzeMetrics`. Change the prompt: request a differ
 | `AI_MODEL`              | no       | `claude-haiku-4-5`    | Claude model.                                                        |
 
 `*` = required on first run only; the `tsnet` state dir persists the node key.
-
-## Run the tests
-
-```bash
-go test ./...
-```
-
-Tests mock `node_exporter` and Aperture with `httptest.Server`, no tailnet needed.
 
 ## What You've Learned
 
