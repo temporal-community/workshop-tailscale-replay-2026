@@ -202,7 +202,7 @@ The starter uses the same tsnet pattern to dial Temporal, fires `GetAddressFromI
 - The worker's network identity is different: it's `<user>-ex2-go-worker-<suffix>` on the tailnet, not the VM's hostname.
 - No system Tailscale client is involved in this worker's path.
 
-This is the pattern Exercise 4 (stretch) uses to run a Go agent with Aperture. Same `tsNode.Dial` trick, different workflow.
+This is the pattern Exercise 4 uses to run a Go metrics watcher with Aperture. Same `tsNode.Dial` trick, different workflow.
 
 ## What You've Learned
 

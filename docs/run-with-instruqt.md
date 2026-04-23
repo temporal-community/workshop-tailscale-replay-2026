@@ -10,7 +10,7 @@ Each attendee VM needs:
 
 - **Python 3.13** - `pyenv` or system package
 - **`uv`** - the Python dependency manager the exercises use
-- **Go 1.26+** - for the Exercise 2 Go worker and the Exercise 4 stretch goal
+- **Go 1.26+** - for the Exercise 2 Go worker and the Exercise 4 metrics watcher
 - **Tailscale** - installed and joined to the workshop tailnet
 - **Browser access** - to `http://temporal-dev:8233` (Temporal Web UI)
 

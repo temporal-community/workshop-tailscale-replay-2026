@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Stretch goal — always passes. This is a take-home challenge.
-echo "This is a stretch goal challenge. Great job getting here!"
+# Non-blocking check. The workshop is self-paced; attendees who join
+# late or want to skip ahead shouldn't be stuck on this gate.
+echo "Exercise 4 marked complete."

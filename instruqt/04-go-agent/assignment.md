@@ -2,17 +2,20 @@
 slug: go-agent
 id: cngfnpse6nrs
 type: challenge
-title: Go Agent (Stretch Goal)
-teaser: Port the weather agent to Go — same Temporal server, same Aperture, different
-  language
+title: Metrics Watcher
+teaser: Run a Go metrics watcher that joins the tailnet via tsnet and asks
+  Claude via Aperture for a health summary on a Temporal Schedule
 notes:
 - type: text
   contents: |-
-    # Stretch Goal: Go Agent
+    # Metrics Watcher
 
-    This is a take-home challenge. The Go files are stubbed out with
-    TODOs. Use the Python implementation as your reference and build
-    the same weather agent in Go.
+    The final workshop activity. A finished Go worker that joins the
+    tailnet via `tsnet`, scrapes `node_exporter` metrics off a
+    `metrics-server` node, and asks Claude (via Aperture) for a
+    plain-English health summary on a Temporal Schedule. No code to
+    edit this time — your job is to run it, watch the Schedule fire
+    in the Temporal UI, and tune the cadence.
 tabs:
 - id: rtxkm5tpeory
   title: Code Editor
@@ -44,9 +47,11 @@ timelimit: 1800
 enhanced_loading: null
 ---
 
-# Exercise 4: Go Agent (Stretch Goal)
+# Exercise 4: Metrics Watcher
 
-The same weather agent pattern, implemented in Go.
+The same `tsnet` pattern from Exercise 2, but against real services: pull `node_exporter` metrics off another tailnet node, ask Claude (via Aperture) for a plain-English health summary, and run it all on a Temporal Schedule. The code is already complete — you'll run it, watch it on the Temporal UI, and tune the cadence.
+
+> **Last activity of the workshop.** There are no TODOs to fill in here. This exercise is lighter on coding and heavier on observing the system in action — a walkthrough of how the pieces fit together in a real, scheduled, durable agent.
 
 > **Not on the tailnet?** If you joined late or `tailscale status` shows **Logged out**, run this in the **Worker** terminal first:
 >
@@ -54,47 +59,105 @@ The same weather agent pattern, implemented in Go.
 > tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
 > ```
 
-## Goal
+## Topology
 
-Port the Python agentic loop to Go, demonstrating that Temporal + Tailscale + Aperture work across languages. Same shared Temporal server, same Aperture endpoint, different language.
-
-## Architecture
-
-The Go agent follows the same pattern:
-
-1. `CreateCompletion` activity calls the OpenAI API through Aperture
-2. The workflow loops: ask the LLM → execute chosen tool → feed result back
-3. Tool activities (`GetWeatherAlerts`, `GetIPAddress`, `GetLocationInfo`) call the same public APIs
-4. Worker connects to the shared Temporal server via the same `temporal.toml` config
-
-The key difference: Go doesn't have an official OpenAI SDK integrated with Temporal, so you'll make HTTP requests directly to the Aperture endpoint.
-
-## Files
-
-Open the **Code Editor** tab to see the stubbed files:
-
-| File | What to implement |
-|------|-------------------|
-| `main.go` | Worker setup and workflow starter |
-| `workflow.go` | Agentic loop workflow |
-| `activities.go` | OpenAI API call + tool implementations |
-
-## Getting Started
-
-```bash
-cd /root/workshop/exercises/04_go_agent/practice
-go mod tidy
-go run .         # Start the worker
-go run . run "What's the weather like where I am?"  # Run a workflow
+```
+┌──────────────────┐  tailnet   ┌────────────────────┐
+│  Your worker     │ ─────────► │ temporal-dev:7233  │
+│  (tsnet inside   │            └────────────────────┘
+│   a Go process)  │  tailnet   ┌────────────────────┐
+│                  │ ─────────► │ metrics-server     │
+│                  │            │ (node_exporter)    │
+│                  │  tailnet   └────────────────────┘
+│                  │            ┌────────────────────┐
+│                  │ ─────────► │ Aperture (http://ai│
+└──────────────────┘            └────────────────────┘
 ```
 
-## Hints
+The worker joins the tailnet *itself* via `tsnet` (just like Exercise 2), but this time its HTTP client reaches a real `metrics-server` node and its LLM calls go through Aperture to Claude. All three destinations are on the workshop tailnet — no public endpoints.
 
-- The Aperture endpoint base URL is `$APERTURE_URL` (the Anthropic SDK appends `/v1/messages` automatically)
-- No auth header needed — Aperture authenticates you via your Tailscale identity. The SDK still requires an `api_key`; pass any string — Aperture ignores it
-- Use `encoding/json` for request/response bodies
-- Look at `exercises/03_weather_agent/solution/` for the Python reference
+## What's already built
 
-## Solution
+Open the **Code Editor** tab. The practice directory has:
 
-The solution will be added in a future update. This is a take-home challenge!
+- `main.go` — joins the tailnet via `tsnet`, dials Temporal through a `tsnet.Dial` context dialer, registers a Temporal Schedule that fires `HealthCheckWorkflow` every `HEALTH_CHECK_INTERVAL`.
+- `activities.go` — `FetchMetrics` scrapes `node_exporter`; `AnalyzeMetrics` asks Claude via the Anthropic SDK (pointed at Aperture) and returns a structured `HealthReport`.
+- `workflow.go` — `HealthCheckWorkflow` chains the two activities.
+- `activities_test.go`, `workflow_test.go` — offline tests using `httptest.Server`.
+
+## Step 1: Move to the practice directory
+
+In the **Worker** terminal:
+
+```bash
+cd exercises/04_go_agent/practice
+go mod download
+```
+
+## Step 2: Run the worker
+
+```bash
+METRICS_URL=http://metrics-server:9100/metrics go run .
+```
+
+`WORKSHOP_USER_ID`, `TS_AUTHKEY`, and `APERTURE_URL` are already exported by the workshop setup, so you only need `METRICS_URL`.
+
+First run takes 10–30 seconds while `tsnet` registers the node. You should see log lines like:
+
+```
+level=INFO msg="joined tailnet" hostname=<you>-metrics-worker userID=<you>
+level=INFO msg="connected to temporal" host=temporal-dev:7233
+level=INFO msg="metrics reachable" url=http://metrics-server:9100/metrics
+level=INFO msg="created schedule" id=<you>-health-check-schedule interval=10m0s workflow=<you>-health-check
+level=INFO msg="worker running" taskQueue=<you>-health-check
+```
+
+## Step 3: Watch the Schedule in the Temporal UI
+
+Open the **Temporal UI** tab. Two places to look:
+
+- **Schedules** → `<your-user-id>-health-check-schedule`. Shows the interval, the next fire time, and recent runs. The Schedule fires immediately on startup because the worker registers it with `TriggerImmediately`.
+- **Workflows** → search for `<your-user-id>-health-check`. Each fired run has a completed row (its ID is suffixed with the schedule fire time) whose Result panel contains the `HealthReport` JSON.
+
+## Step 4: Tune the cadence
+
+`10m` is too slow to watch during the workshop. In the **Worker** terminal, `Ctrl+C`, then restart with a shorter interval:
+
+```bash
+HEALTH_CHECK_INTERVAL=2m METRICS_URL=http://metrics-server:9100/metrics go run .
+```
+
+Any Go duration works (`30s`, `5m`, `1h`). The worker deletes and recreates the Schedule on every startup, so changing the interval just means restarting.
+
+## Step 5: Customize the Claude prompt (optional)
+
+Open `activities.go` in the **Code Editor** tab, find `AnalyzeMetrics`. The prompt lives in a raw string. Change it — ask Claude to flag anything unusual, add a field to the `HealthReport` struct, whatever. Restart the worker and watch the next Schedule fire produce a different `HealthReport` in the UI.
+
+## Step 6: Run the offline tests
+
+The tests mock `node_exporter` and Aperture with `httptest.Server` — no tailnet needed:
+
+```bash
+go test ./...
+```
+
+## Environment variables
+
+| Variable                | Required | Default               | Description                                                          |
+|-------------------------|----------|-----------------------|----------------------------------------------------------------------|
+| `WORKSHOP_USER_ID`      | yes      | (none)                | Prefixes hostname, task queue, schedule ID, and workflow ID.         |
+| `TS_AUTHKEY`            | yes*     | (none)                | Tailscale auth key. Required on first run; `tsnet` reuses state after.|
+| `METRICS_URL`           | yes      | (none)                | `node_exporter` endpoint on the tailnet.                             |
+| `HEALTH_CHECK_INTERVAL` | no       | `10m`                 | Cadence as a Go duration (`30s`, `5m`, `1h`).                        |
+| `TEMPORAL_HOST`         | no       | `temporal-dev:7233`   | Temporal server address.                                             |
+| `APERTURE_URL`          | no       | `http://ai`           | Aperture endpoint; Anthropic SDK appends `/v1/messages` automatically.|
+| `AI_MODEL`              | no       | `claude-haiku-4-5`    | Claude model.                                                        |
+
+`*` = required on first run only; the `tsnet` state dir persists the node key.
+
+## What you've learned
+
+- `tsnet.Dial` works for both tailnet-internal HTTP (metrics) and gRPC (Temporal)
+- Aperture is model-agnostic: the same gateway proxies Anthropic here and OpenAI in Exercise 3
+- Temporal Schedules with `TriggerImmediately` fire once on creation, then every N, with the next fire visible in the UI
+- All three backing services (Temporal, metrics, Aperture) are tailnet-only; Tailscale identity is the auth layer — no keys on your machine
