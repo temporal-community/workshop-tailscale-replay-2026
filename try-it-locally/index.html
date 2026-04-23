@@ -1044,9 +1044,10 @@
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">namespace</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;default&quot;</span>
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">[profile.local.env]</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">OPENAI_API_KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sk-...&quot;</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">OPENAI_BASE_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://api.openai.com/v1&quot;</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">APERTURE_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://api.openai.com&quot;</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">OPENAI_API_KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;sk-...&quot;</span>
 </span></code></pre></div>
+<p>Since you're pointing at OpenAI directly (no Aperture to strip the key), you also need to edit the exercise code: change <code>api_key=""</code> to <code>api_key=os.getenv("OPENAI_API_KEY")</code> in <code>exercises/03_weather_agent/practice/activities.py</code> (and in <code>exercises/04_go_agent/practice/activities.go</code> for Exercise 4, swap the hardcoded <code>option.WithAPIKey("x")</code> for <code>option.WithAPIKey(os.Getenv("OPENAI_API_KEY"))</code>).</p>
 <p>In every terminal you open: <code>export TEMPORAL_PROFILE=local</code>.</p>
 <h2 id="run-the-stack">Run the stack<a class="headerlink" href="#run-the-stack" title="Permanent link">&para;</a></h2>
 <p>Three terminals, all on your machine.</p>
