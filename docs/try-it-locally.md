@@ -61,9 +61,11 @@ address = "temporal-dev:7233"
 namespace = "default"
 
 [profile.local.env]
+APERTURE_URL = "https://api.openai.com"
 OPENAI_API_KEY = "sk-..."
-OPENAI_BASE_URL = "https://api.openai.com/v1"
 ```
+
+Since you're pointing at OpenAI directly (no Aperture to strip the key), you also need to edit the exercise code: change `api_key=""` to `api_key=os.getenv("OPENAI_API_KEY")` in `exercises/03_weather_agent/practice/activities.py` (and in `exercises/04_go_agent/practice/activities.go` for Exercise 4, swap the hardcoded `option.WithAPIKey("x")` for `option.WithAPIKey(os.Getenv("OPENAI_API_KEY"))`).
 
 In every terminal you open: `export TEMPORAL_PROFILE=local`.
 

@@ -27,8 +27,7 @@ cat >> ~/.bashrc << EOF
 # Workshop environment variables
 export TEMPORAL_PROFILE=tailnet
 export WORKSHOP_USER_ID=${WORKSHOP_USER_ID}
-export OPENAI_BASE_URL=http://ai/v1
-export OPENAI_API_KEY=workshop-token
+export APERTURE_URL=http://ai
 EOF
 
 # Create Temporal environment config with the tailnet profile

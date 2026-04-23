@@ -40,7 +40,7 @@ Every LLM call goes through Aperture instead of directly to OpenAI. Aperture:
 - Identifies you by your Tailscale identity
 - Enforces per-user rate limits
 
-You'll configure this by setting `OPENAI_BASE_URL` to the Aperture endpoint.
+You'll configure this by pointing the OpenAI client at the `APERTURE_URL` endpoint (and passing a throwaway key — Aperture strips it).
 
 ### Connection
 
@@ -55,11 +55,12 @@ Open `practice/activities.py`. Find TODO 1 (~line 34) and add the Aperture base 
 ```python
 client = AsyncOpenAI(
     max_retries=0,
-    base_url=os.getenv("OPENAI_BASE_URL"),
+    base_url=f"{os.getenv('APERTURE_URL')}/v1",
+    api_key="",  # Aperture ignores this; identity comes from Tailscale WhoIs
 )
 ```
 
-This tells the OpenAI client to send requests to Aperture instead of directly to `api.openai.com`. Aperture proxies the request to OpenAI with the shared API key and tracks your usage via your Tailscale identity.
+This tells the OpenAI client to send requests to Aperture instead of directly to `api.openai.com`. Aperture proxies the request to the upstream provider with the real shared key and tracks your usage via your Tailscale identity. The OpenAI SDK requires an `api_key` to be present, but the value is discarded by Aperture.
 
 ### Run Phase A
 

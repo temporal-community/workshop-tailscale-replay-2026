@@ -21,7 +21,7 @@ import (
 
 const (
 	defaultTemporalHost   = "temporal-dev:7233"
-	defaultAIURL          = "http://ai"
+	defaultApertureURL    = "http://ai"
 	defaultAIModel        = "claude-haiku-4-5"
 	defaultUserID         = "lab"
 	defaultCheckIntervalS = "10m"
@@ -94,7 +94,7 @@ func main() {
 	acts := NewActivities(
 		tsNode.HTTPClient(),
 		metricsURL,
-		envOr("AI_URL", defaultAIURL),
+		envOr("APERTURE_URL", defaultApertureURL),
 		envOr("AI_MODEL", defaultAIModel),
 	)
 

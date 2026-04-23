@@ -76,7 +76,8 @@ Open `activities.py` in the **Code Editor** tab. Find **TODO 1** and add the Ape
 ```python
 client = AsyncOpenAI(
     max_retries=0,
-    base_url=os.getenv("OPENAI_BASE_URL"),
+    base_url=f"{os.getenv('APERTURE_URL')}/v1",
+    api_key="",  # Aperture ignores this; identity comes from Tailscale WhoIs
 )
 ```
 

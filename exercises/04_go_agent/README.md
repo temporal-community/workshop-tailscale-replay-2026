@@ -104,7 +104,7 @@ Open `activities.go`, find `AnalyzeMetrics`. Change the prompt: request a differ
 | `WORKSHOP_USER_ID`      | no       | `lab`                 | Prefixes hostname, task queue, and workflow ID.                     |
 | `HEALTH_CHECK_INTERVAL` | no       | `10m`                 | Cadence as a Go duration (`30s`, `5m`, `1h`).                       |
 | `TEMPORAL_HOST`         | no       | `temporal-dev:7233`   | Temporal server address.                                            |
-| `AI_URL`                | no       | `http://ai`           | Aperture endpoint.                                                  |
+| `APERTURE_URL`          | no       | `http://ai`           | Aperture endpoint.                                                  |
 | `AI_MODEL`              | no       | `claude-haiku-4-5`    | Claude model.                                                       |
 
 ## Run the tests

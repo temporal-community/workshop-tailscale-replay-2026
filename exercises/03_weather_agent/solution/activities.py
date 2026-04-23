@@ -29,7 +29,8 @@ async def create(request: OpenAIResponsesRequest) -> Response:
     # Route LLM calls through Aperture for rate limiting and key management.
     client = AsyncOpenAI(
         max_retries=0,
-        base_url=os.getenv("OPENAI_BASE_URL"),
+        base_url=f"{os.getenv('APERTURE_URL')}/v1",
+        api_key="",  # Aperture ignores this; identity comes from Tailscale WhoIs
     )
 
     return await client.responses.create(

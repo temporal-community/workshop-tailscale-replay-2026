@@ -28,9 +28,10 @@ async def create(request: OpenAIResponsesRequest) -> Response:
     # Temporal best practice: Disable retry logic in OpenAI API client library.
     #
     # TODO 1: Route LLM calls through Aperture by setting the base_url.
-    # Aperture proxies your requests to OpenAI and enforces rate limits.
-    # Your Tailscale identity is used to track usage — no API key needed on your machine.
-    # Hint: Add base_url=os.getenv("OPENAI_BASE_URL") to the constructor below.
+    # Aperture proxies your requests to the LLM and enforces rate limits.
+    # Your Tailscale identity is used to track usage — no real API key lives on your machine.
+    # Hint: Add base_url=f"{os.getenv('APERTURE_URL')}/v1" to the constructor below.
+    #       (The OpenAI SDK requires api_key to be set; pass api_key="" — Aperture ignores it.)
     client = AsyncOpenAI(max_retries=0)
 
     return await client.responses.create(

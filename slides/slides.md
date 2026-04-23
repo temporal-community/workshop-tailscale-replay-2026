@@ -487,7 +487,8 @@ Every `create` activity call goes through Aperture:
 async def create(request: OpenAIResponsesRequest) -> Response:
     client = AsyncOpenAI(
         max_retries=0,
-        base_url=os.getenv("OPENAI_BASE_URL"),  # Aperture endpoint
+        base_url=f"{os.getenv('APERTURE_URL')}/v1",  # Aperture
+        api_key="",  # Aperture ignores this; identity comes from Tailscale
     )
     return await client.responses.create(
         model=request.model,
@@ -525,7 +526,8 @@ layout: section
     ```python
     client = AsyncOpenAI(
         max_retries=0,
-        base_url=os.getenv("OPENAI_BASE_URL"),
+        base_url=f"{os.getenv('APERTURE_URL')}/v1",
+        api_key="",
     )
     ```
 

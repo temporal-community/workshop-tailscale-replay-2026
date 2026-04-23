@@ -47,18 +47,18 @@ def check_temporal_connection() -> bool:
 
 
 def check_aperture_endpoint() -> bool:
-    base_url = os.getenv("OPENAI_BASE_URL")
-    if not base_url:
-        print(f"  [{WARN}] OPENAI_BASE_URL not set — Aperture endpoint unknown")
+    base = os.getenv("APERTURE_URL")
+    if not base:
+        print(f"  [{WARN}] APERTURE_URL not set — Aperture endpoint unknown")
         return True  # Not a hard failure, might be set later
 
     try:
         import httpx
-        response = httpx.get(f"{base_url}/models", timeout=5)
-        print(f"  [{PASS}] Aperture endpoint at {base_url} (HTTP {response.status_code})")
+        response = httpx.get(f"{base}/v1/models", timeout=5)
+        print(f"  [{PASS}] Aperture endpoint at {base} (HTTP {response.status_code})")
         return True
     except Exception as e:
-        print(f"  [{FAIL}] Aperture endpoint at {base_url} — {e}")
+        print(f"  [{FAIL}] Aperture endpoint at {base} — {e}")
         return False
 
 
@@ -87,7 +87,7 @@ def main() -> None:
 
     print("\n  Environment Variables:")
     check_env_var("TEMPORAL_ADDRESS")
-    check_env_var("OPENAI_BASE_URL")
+    check_env_var("APERTURE_URL")
     check_env_var("WORKSHOP_USER_ID")
 
     print("\n  Connectivity:")

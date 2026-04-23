@@ -90,8 +90,8 @@ go run . run "What's the weather like where I am?"  # Run a workflow
 
 ## Hints
 
-- The Aperture endpoint is `$OPENAI_BASE_URL/responses` (POST)
-- Set `Authorization: Bearer $OPENAI_API_KEY` header
+- The Aperture endpoint base URL is `$APERTURE_URL` (the Anthropic SDK appends `/v1/messages` automatically)
+- No auth header needed — Aperture authenticates you via your Tailscale identity. The SDK still requires an `api_key`; pass any string — Aperture ignores it
 - Use `encoding/json` for request/response bodies
 - Look at `exercises/03_weather_agent/solution/` for the Python reference
 

@@ -122,8 +122,7 @@ export PATH="\$HOME/.local/bin:/usr/local/go/bin:\$HOME/.temporalio/bin:\$PATH"
 export TEMPORAL_CONFIG_FILE=${WORKSHOP_DIR}/temporal.toml
 export WORKSHOP_USER_ID=${WORKSHOP_USER_ID}
 export TS_AUTHKEY=${TS_AUTHKEY}
-export OPENAI_BASE_URL=http://ai/v1
-export OPENAI_API_KEY=workshop-token
+export APERTURE_URL=http://ai
 EOF
 
 # Source them for this script too

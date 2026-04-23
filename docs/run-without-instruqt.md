@@ -52,10 +52,10 @@ address = "temporal-dev:7233"
 namespace = "default"
 
 [profile.tailnet.env]
-OPENAI_BASE_URL = "http://ai/v1"
+APERTURE_URL = "http://ai"
 ```
 
-Notice there's no `OPENAI_API_KEY`. Aperture injects the real credential on the server side, so attendee machines never hold it.
+No API key env var. Aperture injects the real credential on the server side, so attendee machines never hold it — the exercises pass `api_key=""` to the SDK and Aperture authenticates via Tailscale WhoIs.
 
 Then `export TEMPORAL_PROFILE=tailnet` in every terminal. Exercises run exactly as they would in Instruqt:
 
@@ -69,11 +69,11 @@ Workflows show up in the shared UI at `http://temporal-dev:8233`. The whole room
 
 ## Aperture, or what to do if you don't have it
 
-The workshop's rate-limit demo (Exercise 3's "everyone fire at once" moment) relies on Aperture enforcing per-identity quotas. If you have Aperture, point `OPENAI_BASE_URL` at it and the demo works as designed.
+The workshop's rate-limit demo (Exercise 3's "everyone fire at once" moment) relies on Aperture enforcing per-identity quotas. If you have Aperture, point `APERTURE_URL` at it and the demo works as designed.
 
 If you don't have Aperture, you have three options:
 
-1. **Each attendee brings their own OpenAI key.** Attendees set `OPENAI_BASE_URL=https://api.openai.com/v1` and `OPENAI_API_KEY=sk-...` in their `temporal.toml`. You skip the rate-limit demo. Simplest; requires every attendee to have an OpenAI account.
+1. **Each attendee brings their own OpenAI key.** Attendees set `APERTURE_URL=https://api.openai.com` in their `temporal.toml` and change the exercises' `api_key=""` to `api_key=os.getenv("OPENAI_API_KEY")` (with `OPENAI_API_KEY=sk-...` exported). You skip the rate-limit demo. Simplest; requires every attendee to have an OpenAI account.
 2. **Shared-key proxy.** Stand up a small reverse proxy on the VPS that injects a single OpenAI key and enforces rate limits yourself (for example, with nginx and `limit_req`). Skips identity-awareness but preserves the shared-key story.
 3. **Skip the LLM content.** Cover Exercises 1 and 2; drop 3 and 4. Not a great tradeoff. The agent content is the payoff.
 
