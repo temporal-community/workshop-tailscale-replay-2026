@@ -104,7 +104,7 @@ Dir:      filepath.Join(configDir, "workshop-tsnet", nodeName),
 AuthKey:  os.Getenv("TS_AUTHKEY"),
 ```
 
-- `nodeName` is already computed for you by the `resolveNodeName` helper above — it comes out as `<userID>-ex2-go-<mode>-<5 random chars>`. The 5-char suffix is generated once on first run and reused on every subsequent run (by scanning the state dir), so your worker and starter each land on a stable hostname and two attendees with the same `WORKSHOP_USER_ID` never collide.
+- `nodeName` is already computed for you by the `resolveNodeName` helper above — it comes out as `<userID>-ex2-go-<mode>-<5 random chars>`.
 - `Dir` holds the `tsnet` state (node key, machine key). First run uses `TS_AUTHKEY` to register; subsequent runs reuse the stored identity.
 - `AuthKey` is consumed once on first run to join the tailnet.
 

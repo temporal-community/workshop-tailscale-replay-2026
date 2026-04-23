@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math/rand/v2"
 	"net"
 	"os"
 	"path/filepath"
@@ -40,7 +41,11 @@ func main() {
 		logger.Error("WORKSHOP_USER_ID is not set — open a new terminal or run `source ~/.bashrc` (Instruqt sets this automatically for all workshop shells)")
 		os.Exit(1)
 	}
-	hostname := fmt.Sprintf("%s-metrics-worker", userID)
+	hostname, err := resolveNodeName(configDir, userID)
+	if err != nil {
+		logger.Error("resolve node name", "err", err)
+		os.Exit(1)
+	}
 	taskQueue := fmt.Sprintf("%s-health-check", userID)
 	workflowID := fmt.Sprintf("%s-health-check", userID)
 	scheduleID := fmt.Sprintf("%s-health-check-schedule", userID)
@@ -147,6 +152,35 @@ func main() {
 		logger.Error("worker stopped with error", "err", err)
 		os.Exit(1)
 	}
+}
+
+// resolveNodeName returns a stable, per-machine node name of the form
+// "<userID>-ex4-metrics-worker-<suffix>". The 5-char lowercase-alpha
+// suffix is generated once on first run and then reused on every
+// subsequent run (found by scanning workshop-tsnet/ for an existing
+// dir with the same prefix). Two attendees with the same
+// WORKSHOP_USER_ID get different suffixes, so their tailnet hostnames
+// don't collide.
+func resolveNodeName(configDir, userID string) (string, error) {
+	root := filepath.Join(configDir, "workshop-tsnet")
+	prefix := fmt.Sprintf("%s-ex4-metrics-worker-", userID)
+
+	entries, err := os.ReadDir(root)
+	if err != nil && !os.IsNotExist(err) {
+		return "", err
+	}
+	for _, e := range entries {
+		if e.IsDir() && strings.HasPrefix(e.Name(), prefix) {
+			return e.Name(), nil
+		}
+	}
+
+	const letters = "abcdefghijklmnopqrstuvwxyz"
+	suffix := make([]byte, 5)
+	for i := range suffix {
+		suffix[i] = letters[rand.IntN(len(letters))]
+	}
+	return prefix + string(suffix), nil
 }
 
 func envOr(key, fallback string) string {

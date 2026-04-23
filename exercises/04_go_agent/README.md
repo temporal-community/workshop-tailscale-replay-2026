@@ -33,8 +33,8 @@ flowchart LR
 
 - **Temporal Schedule** with `TriggerImmediately`: fires once on start, then every `HEALTH_CHECK_INTERVAL` (default `10m`). Durable on the server.
 - Data comes from another tailnet node (`metrics-server:9100`), not the public internet.
-- LLM call goes to **Claude via Aperture**: same gateway as Exercise 3, different vendor.
-- Returns a structured `HealthReport` instead of a string, so the Temporal UI renders each field cleanly.
+- LLM call goes to **Claude via Aperture**: same gateway as Exercise 3, different LLM backend.
+- Returns a `HealthReport` as the workflow result based on the LLM's interpretation of the metrics.
 
 ### What's already built for you
 
@@ -63,11 +63,13 @@ go run .
 First run takes 10-30 seconds while `tsnet` registers the node. After that:
 
 ```
-level=INFO msg="joined tailnet" hostname=<you>-metrics-worker userID=<you>
+level=INFO msg="joined tailnet" hostname=<you>-ex4-metrics-worker-<5 random chars> userID=<you>
 level=INFO msg="connected to temporal" host=temporal-dev:7233
 level=INFO msg="metrics reachable" url=http://metrics-server:9100/metrics
 level=INFO msg="created schedule" id=<you>-health-check-schedule interval=10m0s workflow=<you>-health-check
 ```
+
+The 5-char suffix on the hostname is generated once on first run and persisted via the tsnet state dir. On subsequent runs it's reused, so you re-register as the same node on the tailnet. Two attendees with the same `WORKSHOP_USER_ID` get different suffixes.
 
 The schedule fires immediately. You'll see a completed workflow in the Temporal UI within seconds.
 

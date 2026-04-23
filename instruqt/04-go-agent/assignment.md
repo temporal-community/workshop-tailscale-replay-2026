@@ -106,7 +106,7 @@ METRICS_URL=http://metrics-server:9100/metrics go run .
 First run takes 10–30 seconds while `tsnet` registers the node. You should see log lines like:
 
 ```
-level=INFO msg="joined tailnet" hostname=<you>-metrics-worker userID=<you>
+level=INFO msg="joined tailnet" hostname=<you>-ex4-metrics-worker-<5 random chars> userID=<you>
 level=INFO msg="connected to temporal" host=temporal-dev:7233
 level=INFO msg="metrics reachable" url=http://metrics-server:9100/metrics
 level=INFO msg="created schedule" id=<you>-health-check-schedule interval=10m0s workflow=<you>-health-check
