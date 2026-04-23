@@ -94,52 +94,33 @@ cd exercises/02_explore_tailscale/go-hello-tsnet/practice
 go mod download
 ```
 
-## Step 5: Complete **TODO 1** - Start a `tsnet` node
+## Step 5: Complete **TODO 1** - Configure the `tsnet.Server`
 
-Open `exercises/02_explore_tailscale/go-hello-tsnet/practice/main.go` in the Code Editor. Find **TODO 1**. It's a scaffold for a `tsnet.Server`. Fill it in:
+Open `exercises/02_explore_tailscale/go-hello-tsnet/practice/main.go` in the Code Editor. Inside `startTsnet`, the `tsnet.Server` literal has three blank fields marked **TODO 1a**, **TODO 1b**, **TODO 1c**. Fill them in:
 
 ```go
-tsNode := &tsnet.Server{
-    Hostname: nodeName,
-    Dir:      filepath.Join(configDir, "workshop-tsnet", nodeName),
-    AuthKey:  os.Getenv("TS_AUTHKEY"),
-}
-if err := tsNode.Start(); err != nil {
-    log.Fatalf("tsnet start: %v", err)
-}
-defer tsNode.Close()
-
-upCtx, upCancel := context.WithTimeout(context.Background(), 30*time.Second)
-defer upCancel()
-if _, err := tsNode.Up(upCtx); err != nil {
-    log.Fatalf("tsnet up: %v", err)
-}
-log.Printf("joined tailnet as %s", nodeName)
+Hostname: nodeName,
+Dir:      filepath.Join(configDir, "workshop-tsnet", nodeName),
+AuthKey:  os.Getenv("TS_AUTHKEY"),
 ```
 
-`nodeName` is resolved to `<userID>-ex2-go-<mode>-<5 random chars>` by the `resolveNodeName` helper already in `main.go`. The random suffix is generated once and then reused via the state dir, so your worker and starter each land on a stable hostname that won't collide with another attendee using the same `WORKSHOP_USER_ID`.
+- `nodeName` is already computed for you by the `resolveNodeName` helper above — it comes out as `<userID>-ex2-go-<mode>-<5 random chars>`. The 5-char suffix is generated once on first run and reused on every subsequent run (by scanning the state dir), so your worker and starter each land on a stable hostname and two attendees with the same `WORKSHOP_USER_ID` never collide.
+- `Dir` holds the `tsnet` state (node key, machine key). First run uses `TS_AUTHKEY` to register; subsequent runs reuse the stored identity.
+- `AuthKey` is consumed once on first run to join the tailnet.
 
-`Dir` holds the `tsnet` state (node key, machine key). First run uses `TS_AUTHKEY` to register the node; subsequent runs reuse the stored identity.
+The rest of the function (`tsNode.Start()`, `tsNode.Up(upCtx)`, the log line) is already in place — just supply the three field values.
 
 ## Step 6: Complete **TODO 2** - Dial Temporal through `tsnet`
 
-Still in `main.go`, find **TODO 2** near `dialTemporal`. The Temporal SDK wants to open a gRPC connection to `temporal-dev:7233`. To route that through the tailnet, inject a custom `ContextDialer` that calls `tsNode.Dial`:
+Still in `main.go`, find **TODO 2** inside `dialTemporal`. The Temporal SDK opens a gRPC connection to `temporal-dev:7233`. To route that through the tailnet, add a `grpc.WithContextDialer` entry at the top of the `dialOptions` slice — the rest of the slice is already in place:
 
 ```go
-c, err := client.Dial(client.Options{
-    HostPort: "temporal-dev:7233",
-    ConnectionOptions: client.ConnectionOptions{
-        DialOptions: []grpc.DialOption{
-            grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
-                return tsNode.Dial(ctx, "tcp", addr)
-            }),
-            grpc.WithTransportCredentials(insecure.NewCredentials()),
-        },
-    },
-})
+grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+    return tsNode.Dial(ctx, "tcp", addr)
+}),
 ```
 
-Every byte the SDK wants to send now flows through `tsNode.Dial`, which routes over the tailnet.
+Every byte the SDK sends now flows through `tsNode.Dial`, which routes over the tailnet.
 
 ## Step 7: Start the Go worker
 
