@@ -126,6 +126,8 @@ uv run starter.py "What are the weather alerts in California?"
 
 You should see the LLM call the weather tool and return results. Click the **Temporal UI** tab to find your Workflow and see the tool call execute as an activity.
 
+> **Note:** If the **Temporal UI** tab shows a connection error or stale content, click the refresh button at the top of the tab. The iframe can hold an old render from before the `tailnet` was ready.
+
 **What happened**
 
 Your Worker executed a Workflow where the LLM chose to call a tool instead of answering directly. The LLM call itself flowed through Aperture, which authenticated you by your Tailscale identity and forwarded the request to OpenAI with the shared API key. Your code never touched an OpenAI API key.
@@ -175,7 +177,6 @@ Now ask the agent a question that requires multiple tool calls to answer.
 In the **Starter** terminal:
 
 ```bash
-cd exercises/03_weather_agent/practice
 uv run starter.py --agent "What's the weather like where I am right now?"
 ```
 

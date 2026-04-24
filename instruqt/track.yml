@@ -9,7 +9,15 @@ description: |-
   weather agent with LLM calls routed through Aperture for rate limiting
   and key management.
 icon: ""
-tags: []
+tags:
+- ai-agents
+- tailscale
+- python
+- temporal
+- networking
+- workflows
+- go
+- llm
 owner: temporal
 developers:
 - mason.egger@temporal.io
@@ -27,5 +35,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "17141183396508438181"
+checksum: "313679379089057279"
 enhanced_loading: false

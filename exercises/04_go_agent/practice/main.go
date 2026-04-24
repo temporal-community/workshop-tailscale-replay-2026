@@ -28,27 +28,117 @@ const (
 )
 
 func main() {
+	mode := "worker"
+	if len(os.Args) > 1 {
+		mode = os.Args[1]
+	}
+
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 
+	userID := os.Getenv("WORKSHOP_USER_ID")
+	if userID == "" {
+		logger.Error("WORKSHOP_USER_ID is not set. Open a new terminal or run `source ~/.bashrc`. Instruqt sets this automatically for all workshop shells.")
+		os.Exit(1)
+	}
+	taskQueue := fmt.Sprintf("%s-health-check", userID)
+	workflowID := fmt.Sprintf("%s-health-check", userID)
+	scheduleID := fmt.Sprintf("%s-health-check-schedule", userID)
+
+	switch mode {
+	case "worker":
+		runWorker(logger, userID, taskQueue)
+	case "starter":
+		runStarter(logger, userID, taskQueue, workflowID, scheduleID)
+	default:
+		logger.Error("unknown mode", "mode", mode, "expected", "'worker' or 'starter'")
+		os.Exit(1)
+	}
+}
+
+func runWorker(logger *slog.Logger, userID, taskQueue string) {
+	tsNode := startTsnet(logger, userID, "worker")
+	defer tsNode.Close()
+
+	c := dialTemporal(logger, tsNode)
+	defer c.Close()
+
+	metricsURL := mustEnv(logger, "METRICS_URL")
+	acts := NewActivities(
+		tsNode.HTTPClient(),
+		metricsURL,
+		envOr("APERTURE_URL", defaultApertureURL),
+		envOr("AI_MODEL", defaultAIModel),
+	)
+
+	pingCtx, pingCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer pingCancel()
+	if sample, err := acts.FetchMetrics(pingCtx); err != nil {
+		logger.Warn("metrics endpoint unreachable", "url", metricsURL, "err", err)
+	} else {
+		logger.Info("metrics reachable", "url", metricsURL, "sample", strings.SplitN(sample, "\n", 2)[0])
+	}
+
+	w := worker.New(c, taskQueue, worker.Options{})
+	w.RegisterWorkflow(HealthCheckWorkflow)
+	w.RegisterActivity(acts)
+
+	logger.Info("worker running", "taskQueue", taskQueue)
+	if err := w.Run(worker.InterruptCh()); err != nil {
+		logger.Error("worker stopped with error", "err", err)
+		os.Exit(1)
+	}
+}
+
+func runStarter(logger *slog.Logger, userID, taskQueue, workflowID, scheduleID string) {
+	tsNode := startTsnet(logger, userID, "starter")
+	defer tsNode.Close()
+
+	c := dialTemporal(logger, tsNode)
+	defer c.Close()
+
+	interval := healthCheckInterval(logger)
+
+	cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cleanupCancel()
+	if err := c.ScheduleClient().GetHandle(cleanupCtx, scheduleID).Delete(cleanupCtx); err != nil {
+		logger.Debug("no existing schedule to delete (ok)", "id", scheduleID, "err", err)
+	}
+
+	schedCtx, schedCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer schedCancel()
+	_, err := c.ScheduleClient().Create(schedCtx, client.ScheduleOptions{
+		ID: scheduleID,
+		Spec: client.ScheduleSpec{
+			Intervals: []client.ScheduleIntervalSpec{{Every: interval}},
+		},
+		RemainingActions: 5,
+		Action: &client.ScheduleWorkflowAction{
+			ID:        workflowID,
+			Workflow:  HealthCheckWorkflow,
+			TaskQueue: taskQueue,
+		},
+		TriggerImmediately: true,
+		Overlap:            enumspb.SCHEDULE_OVERLAP_POLICY_SKIP,
+	})
+	if err != nil {
+		logger.Error("create schedule", "id", scheduleID, "err", err)
+		os.Exit(1)
+	}
+	logger.Info("created schedule", "id", scheduleID, "interval", interval.String(), "workflow", workflowID, "remainingActions", 5)
+}
+
+func startTsnet(logger *slog.Logger, userID, mode string) *tsnet.Server {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		logger.Error("UserConfigDir", "err", err)
 		os.Exit(1)
 	}
 
-	userID := os.Getenv("WORKSHOP_USER_ID")
-	if userID == "" {
-		logger.Error("WORKSHOP_USER_ID is not set — open a new terminal or run `source ~/.bashrc` (Instruqt sets this automatically for all workshop shells)")
-		os.Exit(1)
-	}
-	hostname, err := resolveNodeName(configDir, userID)
+	hostname, err := resolveNodeName(configDir, userID, mode)
 	if err != nil {
 		logger.Error("resolve node name", "err", err)
 		os.Exit(1)
 	}
-	taskQueue := fmt.Sprintf("%s-health-check", userID)
-	workflowID := fmt.Sprintf("%s-health-check", userID)
-	scheduleID := fmt.Sprintf("%s-health-check-schedule", userID)
 
 	tsNode := &tsnet.Server{
 		Hostname: hostname,
@@ -59,7 +149,6 @@ func main() {
 		logger.Error("tsnet start", "err", err)
 		os.Exit(1)
 	}
-	defer tsNode.Close()
 
 	upCtx, upCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer upCancel()
@@ -69,6 +158,10 @@ func main() {
 	}
 	logger.Info("joined tailnet", "hostname", hostname, "userID", userID)
 
+	return tsNode
+}
+
+func dialTemporal(logger *slog.Logger, tsNode *tsnet.Server) client.Client {
 	temporalHost := envOr("TEMPORAL_HOST", defaultTemporalHost)
 	c, err := client.Dial(client.Options{
 		HostPort: "passthrough:///" + temporalHost,
@@ -95,76 +188,19 @@ func main() {
 		logger.Error("temporal dial", "err", err)
 		os.Exit(1)
 	}
-	defer c.Close()
 	logger.Info("connected to temporal", "host", temporalHost)
-
-	metricsURL := mustEnv(logger, "METRICS_URL")
-	acts := NewActivities(
-		tsNode.HTTPClient(),
-		metricsURL,
-		envOr("APERTURE_URL", defaultApertureURL),
-		envOr("AI_MODEL", defaultAIModel),
-	)
-
-	pingCtx, pingCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer pingCancel()
-	if sample, err := acts.FetchMetrics(pingCtx); err != nil {
-		logger.Warn("metrics endpoint unreachable", "url", metricsURL, "err", err)
-	} else {
-		logger.Info("metrics reachable", "url", metricsURL, "sample", strings.SplitN(sample, "\n", 2)[0])
-	}
-
-	w := worker.New(c, taskQueue, worker.Options{})
-	w.RegisterWorkflow(HealthCheckWorkflow)
-	w.RegisterActivity(acts)
-
-	interval := healthCheckInterval(logger)
-
-	cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cleanupCancel()
-	if err := c.ScheduleClient().GetHandle(cleanupCtx, scheduleID).Delete(cleanupCtx); err != nil {
-		logger.Debug("no existing schedule to delete (ok)", "id", scheduleID, "err", err)
-	}
-
-	schedCtx, schedCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer schedCancel()
-	_, schedErr := c.ScheduleClient().Create(schedCtx, client.ScheduleOptions{
-		ID: scheduleID,
-		Spec: client.ScheduleSpec{
-			Intervals: []client.ScheduleIntervalSpec{{Every: interval}},
-		},
-		RemainingActions: 5,
-		Action: &client.ScheduleWorkflowAction{
-			ID:        workflowID,
-			Workflow:  HealthCheckWorkflow,
-			TaskQueue: taskQueue,
-		},
-		TriggerImmediately: true,
-		Overlap:            enumspb.SCHEDULE_OVERLAP_POLICY_SKIP,
-	})
-	if schedErr != nil {
-		logger.Error("create schedule", "id", scheduleID, "err", schedErr)
-		os.Exit(1)
-	}
-	logger.Info("created schedule", "id", scheduleID, "interval", interval.String(), "workflow", workflowID)
-
-	logger.Info("worker running", "taskQueue", taskQueue)
-	if err := w.Run(worker.InterruptCh()); err != nil {
-		logger.Error("worker stopped with error", "err", err)
-		os.Exit(1)
-	}
+	return c
 }
 
 // resolveNodeName returns a stable, per-machine node name of the form
-// "<userID>-ex4-metrics-worker-<suffix>". The 5-char lowercase-alpha
+// "<userID>-ex4-metrics-<mode>-<suffix>". The 5-char lowercase-alpha
 // suffix is generated once on first run and then reused on every
 // subsequent run (found by scanning workshop-tsnet/ for an existing
-// dir with the same prefix). Two attendees with the same
-// WORKSHOP_USER_ID get different suffixes, so their tailnet hostnames
-// don't collide.
-func resolveNodeName(configDir, userID string) (string, error) {
+// dir with the same prefix). Worker and starter get their own nodes
+// on the tailnet so you can see both of them in `tailscale status`.
+func resolveNodeName(configDir, userID, mode string) (string, error) {
 	root := filepath.Join(configDir, "workshop-tsnet")
-	prefix := fmt.Sprintf("%s-ex4-metrics-worker-", userID)
+	prefix := fmt.Sprintf("%s-ex4-metrics-%s-", userID, mode)
 
 	entries, err := os.ReadDir(root)
 	if err != nil && !os.IsNotExist(err) {

@@ -149,4 +149,35 @@ export WORKSHOP_USER_ID="${WORKSHOP_USER_ID}"
 cd "$WORKSHOP_DIR"
 uv sync
 
+# --- Warm the Go build cache for ex2 ---
+# tsnet pulls in ~160 transitive Go modules. Compiling them cold on
+# an n1-standard-2 VM takes 3-5 minutes, which would make the
+# attendee's first `go run` in ex2 look hung. The Instruqt VM
+# persists across challenges, and $GOCACHE / $GOMODCACHE live
+# outside the sparse-checkout, so a warm cache survives into ex2.
+#
+# Run this synchronously here: attendees are listening to intro
+# slides while setup runs, so a longer ex1 setup is a better UX
+# than a 5-minute stall the first time they run `go run` in ex2.
+# Previous attempt to run this in `nohup ... &` didn't survive the
+# setup-workshop exit on Instruqt's runner.
+
+cd "$WORKSHOP_DIR"
+git sparse-checkout add '/exercises/02_explore_tailscale/**'
+git checkout
+
+cd "$WORKSHOP_DIR/exercises/02_explore_tailscale/go-hello-tsnet/solution"
+go mod download
+go build -o /dev/null .
+
+# Narrow the checkout back to ex1 so the attendee's Code Editor
+# tree stays clean. $GOCACHE / $GOMODCACHE are untouched.
+cd "$WORKSHOP_DIR"
+git sparse-checkout set --no-cone \
+    '/pyproject.toml' \
+    '/uv.lock' \
+    '/temporal.toml' \
+    '/exercises/01_hello_tailnet/**'
+git checkout
+
 echo "==> Setup complete. User ID: ${WORKSHOP_USER_ID}"

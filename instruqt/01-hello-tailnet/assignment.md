@@ -147,7 +147,9 @@ Your location:   Alderaan, Core Worlds
 
 ## Step 7: Check the Temporal UI
 
-Click the **Temporal UI** tab (you may need to click the refresh button and wait a few seconds) and find your Workflows by searching for your user ID. You should see your Workflow, along with all other attendees in the workshop!
+Click the **Temporal UI** tab and find your Workflows by searching for your user ID. You should see your Workflow, along with all other attendees in the workshop!
+
+> **Note:** The **Temporal UI** tab was loaded before your Exercise Environment joined the `tailnet`, so its first render is stale. Click the refresh button at the top of the tab to reload it. If it still shows a connection error, wait a few seconds and refresh again.
 
 **What happened**
 

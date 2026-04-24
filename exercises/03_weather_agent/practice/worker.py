@@ -62,6 +62,7 @@ async def run_agent_worker() -> None:
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
     logging.getLogger("temporalio").setLevel(logging.WARNING)
+    logging.getLogger("temporalio.workflow").setLevel(logging.INFO)
     logging.getLogger("openai").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     warnings.filterwarnings("ignore", category=UserWarning, module="temporalio.converter")

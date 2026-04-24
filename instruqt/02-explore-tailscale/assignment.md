@@ -181,7 +181,7 @@ cd exercises/02_explore_tailscale/go-hello-tsnet/practice
 go run . worker
 ```
 
-The first run takes about five seconds while `tsnet` registers the node. You should see output similar to:
+The first run takes 10 to 30 seconds while `tsnet` registers the node. You should see output similar to:
 
 ```output
 joined tailnet as <your-user-id>-ex2-go-worker-<5 random chars>
@@ -218,6 +218,8 @@ You should see your public IP address and location printed, same as Exercise 1, 
 ## Step 10: Check the Temporal UI
 
 Click the **Temporal UI** tab and find your `<your-user-id>-hello-tsnet` Workflow. Click into it and look at the worker info on each activity. The task queue is `<your-user-id>-hello-tsnet`, and the worker identity reflects the Go process rather than the Python one from Exercise 1.
+
+> **Note:** If the **Temporal UI** tab shows a connection error or stale content, click the refresh button at the top of the tab. The iframe can hold an old render from before the `tailnet` was ready.
 
 **What happened**
 

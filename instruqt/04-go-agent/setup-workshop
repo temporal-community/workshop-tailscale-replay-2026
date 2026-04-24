@@ -1,12 +1,30 @@
 #!/bin/bash
 set -euxo pipefail
 
+export PATH="/usr/local/go/bin:$PATH"
+
+# Discard any working-tree modifications from the previous challenge
+# so dirty files don't survive into this one. `git sparse-checkout set`
+# refuses to silently drop modified files; without this reset, the
+# attendee's Code Editor tree would carry orphan leftovers (e.g.
+# their edited practice/activities.py from ex3).
+cd /root/workshop
+git reset --hard HEAD
+
 # Narrow the sparse-checkout to only exercise 4, so the Code Editor
 # tree at /root/workshop isn't cluttered with code from earlier
 # exercises the attendee has already moved past.
-cd /root/workshop
 git sparse-checkout set --no-cone \
     '/pyproject.toml' \
     '/uv.lock' \
     '/temporal.toml' \
     '/exercises/04_go_agent/**'
+
+# tsnet + Temporal SDK are already compiled in $GOCACHE from ex1's
+# warmup. The Anthropic SDK is ex4-specific; pre-compile here so the
+# attendee's first `go run . worker` doesn't stall on incremental
+# builds. Worker and starter share the same binary (dispatched by
+# argv), so one build warms both.
+cd /root/workshop/exercises/04_go_agent/practice
+go mod download
+go build -o /dev/null .
