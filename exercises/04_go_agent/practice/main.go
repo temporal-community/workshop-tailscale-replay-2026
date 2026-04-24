@@ -71,7 +71,7 @@ func main() {
 
 	temporalHost := envOr("TEMPORAL_HOST", defaultTemporalHost)
 	c, err := client.Dial(client.Options{
-		HostPort: temporalHost,
+		HostPort: "passthrough:///" + temporalHost,
 		Logger:   logger,
 		ConnectionOptions: client.ConnectionOptions{
 			DialOptions: []grpc.DialOption{

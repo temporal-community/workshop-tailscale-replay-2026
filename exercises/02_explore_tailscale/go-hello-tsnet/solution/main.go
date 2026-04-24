@@ -112,7 +112,7 @@ func resolveNodeName(configDir, userID, mode string) (string, error) {
 
 func dialTemporal(tsNode *tsnet.Server) client.Client {
 	c, err := client.Dial(client.Options{
-		HostPort: temporalHost,
+		HostPort: "passthrough:///" + temporalHost,
 		ConnectionOptions: client.ConnectionOptions{
 			DialOptions: []grpc.DialOption{
 				grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {

@@ -145,7 +145,7 @@ func dialTemporal(tsNode *tsnet.Server) client.Client {
 	}
 
 	c, err := client.Dial(client.Options{
-		HostPort: temporalHost,
+		HostPort: "passthrough:///" + temporalHost,
 		ConnectionOptions: client.ConnectionOptions{
 			DialOptions: dialOptions,
 		},
