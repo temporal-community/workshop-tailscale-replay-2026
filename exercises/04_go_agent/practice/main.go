@@ -24,7 +24,7 @@ const (
 	defaultTemporalHost   = "temporal-dev:7233"
 	defaultApertureURL    = "http://ai"
 	defaultAIModel        = "claude-haiku-4-5"
-	defaultCheckIntervalS = "10m"
+	defaultCheckIntervalS = "1m"
 )
 
 func main() {
@@ -133,6 +133,7 @@ func main() {
 		Spec: client.ScheduleSpec{
 			Intervals: []client.ScheduleIntervalSpec{{Every: interval}},
 		},
+		RemainingActions: 5,
 		Action: &client.ScheduleWorkflowAction{
 			ID:        workflowID,
 			Workflow:  HealthCheckWorkflow,

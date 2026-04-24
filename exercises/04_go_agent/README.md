@@ -31,7 +31,7 @@ flowchart LR
 
 ### What's different from Exercise 2
 
-- **Temporal Schedule** with `TriggerImmediately`: fires once on start, then every `HEALTH_CHECK_INTERVAL` (default `10m`). Durable on the server.
+- **Temporal Schedule** with `TriggerImmediately`: fires once on start, then every `HEALTH_CHECK_INTERVAL` (default `1m`), for up to 5 runs. Restarting the worker resets the count.
 - Data comes from another tailnet node (`metrics-server:9100`), not the public internet.
 - LLM call goes to **Claude via Aperture**: same gateway as Exercise 3, different LLM backend.
 - Returns a `HealthReport` as the workflow result based on the LLM's interpretation of the metrics.
@@ -66,12 +66,12 @@ First run takes 10-30 seconds while `tsnet` registers the node. After that:
 level=INFO msg="joined tailnet" hostname=<you>-ex4-metrics-worker-<5 random chars> userID=<you>
 level=INFO msg="connected to temporal" host=temporal-dev:7233
 level=INFO msg="metrics reachable" url=http://metrics-server:9100/metrics
-level=INFO msg="created schedule" id=<you>-health-check-schedule interval=10m0s workflow=<you>-health-check
+level=INFO msg="created schedule" id=<you>-health-check-schedule interval=1m0s workflow=<you>-health-check
 ```
 
 The 5-char suffix on the hostname is generated once on first run and persisted via the tsnet state dir. On subsequent runs it's reused, so you re-register as the same node on the tailnet. Two attendees with the same `WORKSHOP_USER_ID` get different suffixes.
 
-The schedule fires immediately. You'll see a completed workflow in the Temporal UI within seconds.
+The schedule fires immediately. You'll see a completed workflow in the Temporal UI within seconds. It fires up to 5 times at the configured interval, then pauses — restart the worker to reset the count.
 
 ### Step 3: Watch it in the Temporal UI
 
@@ -82,17 +82,17 @@ Open `http://temporal-dev:8233`. Two places to look:
 
 ### Step 4: Tune the cadence
 
-10m is too slow to watch during the workshop. Stop the worker with `Ctrl+C`, then restart with a shorter interval:
+The default is `1m`. You can tune both the interval and run count by restarting with a different value:
 
 ```bash
-HEALTH_CHECK_INTERVAL=2m \
+HEALTH_CHECK_INTERVAL=30s \
 WORKSHOP_USER_ID=$WORKSHOP_USER_ID \
 TS_AUTHKEY=tskey-auth-<your-key> \
 METRICS_URL=http://metrics-server:9100/metrics \
 go run .
 ```
 
-Any Go duration (`30s`, `5m`, `1h`). The worker recreates the schedule on startup, so restarting just takes effect.
+Any Go duration (`30s`, `2m`, `5m`). The worker recreates the schedule on startup, so restarting takes effect and resets the 5-run count.
 
 ### Step 5: Customize the Claude prompt
 
@@ -105,7 +105,7 @@ Open `activities.go`, find `AnalyzeMetrics`. Change the prompt: request a differ
 | `WORKSHOP_USER_ID`      | yes      | (none)                | Prefixes hostname, task queue, schedule ID, and workflow ID.         |
 | `TS_AUTHKEY`            | yes*     | (none)                | Tailscale auth key. Required on first run; tsnet reuses state after. |
 | `METRICS_URL`           | yes      | (none)                | `node_exporter` endpoint on the tailnet.                             |
-| `HEALTH_CHECK_INTERVAL` | no       | `10m`                 | Cadence as a Go duration (`30s`, `5m`, `1h`).                        |
+| `HEALTH_CHECK_INTERVAL` | no       | `1m`                  | Cadence as a Go duration (`30s`, `2m`, `5m`).                        |
 | `TEMPORAL_HOST`         | no       | `temporal-dev:7233`   | Temporal server address.                                             |
 | `APERTURE_URL`          | no       | `http://ai`           | Aperture endpoint; Anthropic SDK appends `/v1/messages` automatically.|
 | `AI_MODEL`              | no       | `claude-haiku-4-5`    | Claude model.                                                        |
@@ -116,5 +116,5 @@ Open `activities.go`, find `AnalyzeMetrics`. Change the prompt: request a differ
 
 - `tsnet.Dial` works for both tailnet-internal HTTP and gRPC calls
 - Aperture supports multiple LLM backends: Anthropic here, OpenAI in Exercise 3
-- Temporal Schedules with `TriggerImmediately` fire now, then every N, with the next fire visible in the UI
+- Temporal Schedules with `TriggerImmediately` fire now, then every `HEALTH_CHECK_INTERVAL`, up to 5 times, with each fire visible in the UI
 - All three backing services are tailnet-only; Tailscale identity is the auth layer

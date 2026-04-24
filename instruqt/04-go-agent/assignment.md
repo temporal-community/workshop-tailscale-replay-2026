@@ -93,7 +93,7 @@ The Worker joins the `tailnet` *itself* via `tsnet` (just like Exercise 2), but 
 
 Open the **Code Editor** tab. The `practice/` directory has:
 
-- `main.go`: joins the `tailnet` via `tsnet`, dials Temporal through a `tsnet.Dial` context dialer, and registers a Temporal Schedule that fires `HealthCheckWorkflow` every `HEALTH_CHECK_INTERVAL`.
+- `main.go`: joins the `tailnet` via `tsnet`, dials Temporal through a `tsnet.Dial` context dialer, and registers a Temporal Schedule that fires `HealthCheckWorkflow` every `HEALTH_CHECK_INTERVAL` for up to 5 runs.
 - `activities.go`: `FetchMetrics` scrapes `node_exporter`, and `AnalyzeMetrics` asks Claude via the Anthropic SDK (pointed at Aperture) and returns a structured `HealthReport`.
 - `workflow.go`: `HealthCheckWorkflow` chains the two activities.
 - `activities_test.go`, `workflow_test.go`: offline tests using `httptest.Server`.
@@ -127,7 +127,7 @@ The first run takes 10 to 30 seconds while `tsnet` registers the node. You shoul
 level=INFO msg="joined tailnet" hostname=<you>-ex4-metrics-worker-<5 random chars> userID=<you>
 level=INFO msg="connected to temporal" host=temporal-dev:7233
 level=INFO msg="metrics reachable" url=http://metrics-server:9100/metrics
-level=INFO msg="created schedule" id=<you>-health-check-schedule interval=10m0s workflow=<you>-health-check
+level=INFO msg="created schedule" id=<you>-health-check-schedule interval=1m0s workflow=<you>-health-check
 level=INFO msg="worker running" taskQueue=<you>-health-check
 ```
 
@@ -140,17 +140,19 @@ The Worker registered its Schedule with `TriggerImmediately`, so one Workflow ru
 
 You should see at least one completed Workflow run whose result is a structured `HealthReport` produced by Claude.
 
+> **Note:** The Schedule is capped at 3 runs to keep the shared Temporal server clean. Once all 3 fire, the Schedule pauses itself. Restarting the Worker resets the count.
+
 ## Step 4: Tune the cadence
 
-`10m` is too slow to watch during the workshop. You'll want to drop the interval so runs fire often enough to observe.
+The default interval is `1m` and the Schedule fires up to 5 times before pausing. You can tune both by restarting the Worker with different values.
 
-In the **Worker** terminal, stop the Worker with `Ctrl+C`, then restart it with a shorter interval:
+In the **Worker** terminal, stop the Worker with `Ctrl+C`, then restart it with a different interval:
 
 ```bash
-HEALTH_CHECK_INTERVAL=2m METRICS_URL=http://metrics-server:9100/metrics go run .
+HEALTH_CHECK_INTERVAL=30s METRICS_URL=http://metrics-server:9100/metrics go run .
 ```
 
-Any Go duration works (`30s`, `5m`, `1h`). The Worker deletes and recreates the Schedule on every startup, so changing the interval just means restarting.
+Any Go duration works (`30s`, `2m`, `5m`). The Worker deletes and recreates the Schedule on every startup, so changing the interval just means restarting — and the 5-run count resets too.
 
 ## Step 5: Customize the Claude prompt (optional)
 
@@ -177,7 +179,7 @@ You should see all tests pass. These are the tests that would run in CI for a pr
 | `WORKSHOP_USER_ID`      | yes      | (none)                | Prefixes hostname, task queue, Schedule ID, and Workflow ID.         |
 | `TS_AUTHKEY`            | yes*     | (none)                | Tailscale auth key. Required on first run; `tsnet` reuses state after.|
 | `METRICS_URL`           | yes      | (none)                | `node_exporter` endpoint on the `tailnet`.                           |
-| `HEALTH_CHECK_INTERVAL` | no       | `10m`                 | Cadence as a Go duration (`30s`, `5m`, `1h`).                        |
+| `HEALTH_CHECK_INTERVAL` | no       | `1m`                  | Cadence as a Go duration (`30s`, `2m`, `5m`).                        |
 | `TEMPORAL_HOST`         | no       | `temporal-dev:7233`   | Temporal Server address.                                             |
 | `APERTURE_URL`          | no       | `http://ai`           | Aperture endpoint; Anthropic SDK appends `/v1/messages` automatically.|
 | `AI_MODEL`              | no       | `claude-haiku-4-5`    | Claude model.                                                        |
@@ -190,7 +192,7 @@ In this exercise you:
 
 - Ran a Go Worker that joins the `tailnet` via `tsnet` and dials three different `tailnet` services (Temporal, `node_exporter`, Aperture) through the same embedded node
 - Used the same Aperture pattern from Exercise 3, this time with Anthropic's Claude instead of OpenAI
-- Registered a Temporal Schedule with `TriggerImmediately` and watched it fire on creation and then on a regular cadence in the Temporal UI
+- Registered a Temporal Schedule with `TriggerImmediately` and watched it fire on creation and on a 1-minute cadence in the Temporal UI
 - Tuned the cadence by restarting the Worker with a different `HEALTH_CHECK_INTERVAL`
 - Optionally customized the Claude prompt and saw the structured `HealthReport` change on the next fire
 - Ran the offline tests that mock `node_exporter` and Aperture, no `tailnet` required
