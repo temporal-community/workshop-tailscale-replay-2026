@@ -1,6 +1,3 @@
-# ABOUTME: Temporal Workflow implementing a multi-turn agentic loop with dynamic tool dispatch.
-# ABOUTME: The LLM decides which tools to call in a loop until the task is complete.
-
 import json
 from datetime import timedelta
 

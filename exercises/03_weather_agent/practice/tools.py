@@ -1,6 +1,3 @@
-# ABOUTME: Tool definitions and implementations for the weather agent exercise.
-# ABOUTME: Includes weather alerts, random number, IP address, and geolocation tools.
-
 import json
 import random
 from typing import Any

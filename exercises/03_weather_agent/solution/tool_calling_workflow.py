@@ -1,6 +1,3 @@
-# ABOUTME: Temporal Workflow that demonstrates single tool-calling with the OpenAI Responses API.
-# ABOUTME: Calls the LLM with a weather alerts tool, executes it if chosen, and returns a result.
-
 import json
 from datetime import timedelta
 

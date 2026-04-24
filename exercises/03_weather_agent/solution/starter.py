@@ -1,6 +1,3 @@
-# ABOUTME: Starts tool-calling or agent workflows on the shared Temporal server.
-# ABOUTME: Use --agent flag for the agentic loop, default is tool-calling.
-
 import argparse
 import asyncio
 import logging
@@ -16,7 +13,7 @@ from tool_calling_workflow import ToolCallingWorkflow
 USER_ID = os.getenv("WORKSHOP_USER_ID")
 if not USER_ID:
     raise SystemExit(
-        "WORKSHOP_USER_ID is not set. Open a new terminal or run `source ~/.bashrc` — "
+        "WORKSHOP_USER_ID is not set. Open a new terminal or run `source ~/.bashrc`. "
         "Instruqt sets this automatically for all workshop shells."
     )
 TOOL_CALLING_TASK_QUEUE = f"{USER_ID}-tool-calling"
@@ -25,7 +22,7 @@ AGENT_TASK_QUEUE = f"{USER_ID}-agent"
 
 async def run_tool_calling(query: str) -> None:
     """Start the tool-calling workflow and print the result."""
-    config = ClientConfig.load_client_connect_config()
+    config = ClientConfig.load_client_connect_config(profile="tailnet")
     client = await Client.connect(**config, data_converter=pydantic_data_converter)
 
     result = await client.execute_workflow(
@@ -39,7 +36,7 @@ async def run_tool_calling(query: str) -> None:
 
 async def run_agent(query: str) -> None:
     """Start the agentic loop workflow and print the result."""
-    config = ClientConfig.load_client_connect_config()
+    config = ClientConfig.load_client_connect_config(profile="tailnet")
     client = await Client.connect(**config, data_converter=pydantic_data_converter)
 
     result = await client.execute_workflow(

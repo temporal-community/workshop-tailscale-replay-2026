@@ -1,6 +1,3 @@
-# ABOUTME: Starts the GetAddressFromIP workflow on the shared Temporal server.
-# ABOUTME: Uses your WORKSHOP_USER_ID to create a unique workflow ID.
-
 import asyncio
 import logging
 import os

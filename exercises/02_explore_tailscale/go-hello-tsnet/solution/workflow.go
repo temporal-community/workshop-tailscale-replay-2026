@@ -1,6 +1,3 @@
-// ABOUTME: GetAddressFromIP workflow — the Go port of Exercise 1's geo-IP workflow.
-// ABOUTME: Identical shape to the Python version: two activities, IP then geo lookup.
-
 package main
 
 import (

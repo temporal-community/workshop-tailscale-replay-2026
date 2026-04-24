@@ -1,6 +1,3 @@
-# ABOUTME: Activities that fetch your public IP address and geolocate it.
-# ABOUTME: Uses icanhazip.com for IP and ip-api.com for geolocation.
-
 import requests
 from temporalio import activity
 

@@ -23,8 +23,9 @@ lab_config:
   loadingMessages: true
   theme:
     name: modern-dark
-  override_challenge_layout: false
+  override_challenge_layout: true
   hideStopButton: false
-  default_layout: AssignmentLeft
-checksum: "14408616444357613067"
+  default_layout: AssignmentRight
+  default_layout_sidebar_size: 40
+checksum: "17141183396508438181"
 enhanced_loading: false

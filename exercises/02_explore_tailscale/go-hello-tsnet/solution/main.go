@@ -1,6 +1,3 @@
-// ABOUTME: Worker + starter for Exercise 2 Part 3 — hello-tsnet Go worker (solution).
-// ABOUTME: Joins the tailnet via tsnet and dials Temporal through a custom gRPC ContextDialer.
-
 package main
 
 import (
@@ -111,20 +108,22 @@ func resolveNodeName(configDir, userID, mode string) (string, error) {
 }
 
 func dialTemporal(tsNode *tsnet.Server) client.Client {
+	dialOptions := []grpc.DialOption{
+		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+			return tsNode.Dial(ctx, "tcp", addr)
+		}),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                30 * time.Second,
+			Timeout:             10 * time.Second,
+			PermitWithoutStream: true,
+		}),
+	}
+
 	c, err := client.Dial(client.Options{
 		HostPort: "passthrough:///" + temporalHost,
 		ConnectionOptions: client.ConnectionOptions{
-			DialOptions: []grpc.DialOption{
-				grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
-					return tsNode.Dial(ctx, "tcp", addr)
-				}),
-				grpc.WithTransportCredentials(insecure.NewCredentials()),
-				grpc.WithKeepaliveParams(keepalive.ClientParameters{
-					Time:                30 * time.Second,
-					Timeout:             10 * time.Second,
-					PermitWithoutStream: true,
-				}),
-			},
+			DialOptions: dialOptions,
 		},
 	})
 	if err != nil {

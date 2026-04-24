@@ -1,6 +1,3 @@
-# ABOUTME: Temporal Activity definitions for OpenAI API calls and dynamic tool dispatch.
-# ABOUTME: Includes the create activity for LLM calls and dynamic_tool_activity for tool execution.
-
 import inspect
 import os
 from collections.abc import Sequence

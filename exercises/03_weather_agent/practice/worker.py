@@ -1,6 +1,3 @@
-# ABOUTME: Temporal Worker for the weather agent exercise.
-# ABOUTME: Supports both tool-calling and agentic loop modes via --agent flag.
-
 import argparse
 import asyncio
 import concurrent.futures
@@ -19,7 +16,7 @@ from tool_calling_workflow import ToolCallingWorkflow
 USER_ID = os.getenv("WORKSHOP_USER_ID")
 if not USER_ID:
     raise SystemExit(
-        "WORKSHOP_USER_ID is not set. Open a new terminal or run `source ~/.bashrc` — "
+        "WORKSHOP_USER_ID is not set. Open a new terminal or run `source ~/.bashrc`. "
         "Instruqt sets this automatically for all workshop shells."
     )
 TOOL_CALLING_TASK_QUEUE = f"{USER_ID}-tool-calling"
@@ -28,7 +25,7 @@ AGENT_TASK_QUEUE = f"{USER_ID}-agent"
 
 async def run_tool_calling_worker() -> None:
     """Run the worker for the simple tool-calling workflow."""
-    config = ClientConfig.load_client_connect_config()
+    config = ClientConfig.load_client_connect_config(profile="tailnet")
     logging.info(f"Connecting to Temporal at {config.get('target_host')}")
     client = await Client.connect(**config, data_converter=pydantic_data_converter)
 
@@ -46,7 +43,7 @@ async def run_tool_calling_worker() -> None:
 
 async def run_agent_worker() -> None:
     """Run the worker for the agentic loop workflow with dynamic activities."""
-    config = ClientConfig.load_client_connect_config()
+    config = ClientConfig.load_client_connect_config(profile="tailnet")
     logging.info(f"Connecting to Temporal at {config.get('target_host')}")
     client = await Client.connect(**config, data_converter=pydantic_data_converter)
 

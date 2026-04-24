@@ -1,6 +1,3 @@
-// ABOUTME: Temporal activities for the hello-tsnet exercise.
-// ABOUTME: GetIP fetches the public IP; GetLocationInfo geolocates it.
-
 package main
 
 import (

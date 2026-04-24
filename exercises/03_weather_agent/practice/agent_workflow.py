@@ -1,6 +1,3 @@
-# ABOUTME: Temporal Workflow implementing a multi-turn agentic loop with dynamic tool dispatch.
-# ABOUTME: The LLM decides which tools to call in a loop until the task is complete.
-
 import json
 from datetime import timedelta
 
@@ -19,9 +16,9 @@ class AgentWorkflow:
         input_list = [{"type": "message", "role": "user", "content": input}]
 
         # TODO 2: Enable the agentic loop so the LLM can make multiple tool calls.
-        # Right now this only runs once. The agent needs to loop until it decides
-        # it has enough information to respond.
-        # Hint: Change False to True.
+        # With the condition set to False, the body below never runs and the
+        # Workflow returns None. Flip False to True and the LLM can iterate
+        # until it has enough information to respond.
         while False:
             workflow.logger.info("=" * 80)
 
@@ -50,8 +47,6 @@ class AgentWorkflow:
             else:
                 workflow.logger.info(f"No tools chosen, responding with a message: {result.output_text}")
                 return result.output_text
-
-        return "Agent loop is not enabled. Complete TODO 2 to fix this."
 
     async def _handle_function_call(self, item, result, input_list):
         """Execute a tool call chosen by the LLM using dynamic activities."""

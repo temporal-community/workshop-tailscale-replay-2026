@@ -1,6 +1,3 @@
-# ABOUTME: Data models and helper functions for the weather agent exercise.
-# ABOUTME: Defines request types, tool schema helpers, and agent system instructions.
-
 from dataclasses import dataclass
 from typing import Any
 

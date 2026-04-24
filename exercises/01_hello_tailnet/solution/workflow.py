@@ -1,6 +1,3 @@
-# ABOUTME: Temporal Workflow that gets your public IP and geolocates it.
-# ABOUTME: Demonstrates basic workflow structure with two sequential activities.
-
 import asyncio
 from datetime import timedelta
 

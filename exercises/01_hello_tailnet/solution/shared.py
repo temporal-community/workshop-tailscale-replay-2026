@@ -1,6 +1,3 @@
-# ABOUTME: Shared data models for the Hello Tailnet exercise.
-# ABOUTME: Defines workflow input/output dataclasses.
-
 from dataclasses import dataclass
 
 

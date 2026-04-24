@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# ABOUTME: Instruqt lifecycle script to set up the workshop environment.
-# ABOUTME: Clones the repo, installs dependencies, configures temporal.toml and shell env vars.
-
 set -euo pipefail
 
 REPO_URL="https://github.com/temporal-community/workshop-tailscale-replay-2026.git"

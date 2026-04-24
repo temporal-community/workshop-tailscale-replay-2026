@@ -1,6 +1,12 @@
 #!/bin/bash
 set -euxo pipefail
 
-# Extend the sparse-checkout to include exercise 4.
+# Narrow the sparse-checkout to only exercise 4, so the Code Editor
+# tree at /root/workshop isn't cluttered with code from earlier
+# exercises the attendee has already moved past.
 cd /root/workshop
-git sparse-checkout add '/exercises/04_go_agent/**'
+git sparse-checkout set --no-cone \
+    '/pyproject.toml' \
+    '/uv.lock' \
+    '/temporal.toml' \
+    '/exercises/04_go_agent/**'

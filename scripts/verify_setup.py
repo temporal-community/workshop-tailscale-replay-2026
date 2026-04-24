@@ -1,6 +1,3 @@
-# ABOUTME: Pre-flight check script for the workshop environment.
-# ABOUTME: Verifies Python version, dependencies, Temporal connectivity, and Aperture endpoint.
-
 import os
 import socket
 import sys

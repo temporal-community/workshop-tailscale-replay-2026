@@ -45,6 +45,21 @@ export PATH="$HOME/.temporalio/bin:$PATH"
 
 curl -fsSL https://tailscale.com/install.sh | sh
 
+# --- Loosen reverse path filtering for Tailscale exit nodes ---
+# GCP images ship /etc/sysctl.d/60-gce-network-security.conf with
+# rp_filter=1 (strict). That silently drops return packets on the
+# exit-node path, which in practice kills the VM's egress to the
+# Instruqt control plane and nukes the whole Exercise Environment
+# the moment an attendee sets `--exit-node=nyc3-exit-node` in Step 8.
+# See https://tailscale.com/docs/reference/reference-architectures/gcp
+# and https://github.com/tailscale/tailscale/issues/3310.
+
+cat > /etc/sysctl.d/99-tailscale.conf << 'EOF'
+net.ipv4.conf.all.rp_filter = 2
+net.ipv4.conf.default.rp_filter = 2
+EOF
+sysctl --system
+
 # --- Local reverse proxy for Instruqt service tabs ---
 # Instruqt `service` tabs proxy VM ports, not tailnet URLs, and render
 # the proxied site inside an iframe. Caddy listens on :8233 and :80,

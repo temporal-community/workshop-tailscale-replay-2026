@@ -327,6 +327,32 @@ Create `temporal.toml`, add your user ID, run the geo-IP workflow.
 Open the Temporal UI and find your workflow.
 
 ---
+
+# What Just Happened in Exercise 1
+
+```mermaid {scale: 0.8}
+flowchart LR
+  subgraph GCP["GCP: Your Exercise Environment"]
+    direction TB
+    S["starter.py"]
+    W["worker.py"]
+  end
+  subgraph VPS["DigitalOcean: VPS"]
+    T["Temporal Dev Server<br/>temporal-dev:7233"]
+  end
+  S <-. tailnet .-> T
+  W <-. tailnet .-> T
+```
+
+<v-clicks>
+
+- Two clouds, one Workflow, only a `tailnet` between them
+- The Temporal Server was never exposed to the public internet, yet your Worker reached it like a local service
+- Your Workflow ID carried your name so you could find your run among every attendee's in the shared UI
+
+</v-clicks>
+
+---
 layout: toc
 current: ex2
 ---
@@ -387,6 +413,32 @@ minutes: 15
 Explore your Tailscale network.
 
 Run `tailscale status`, ping the server, check your identity.
+
+---
+
+# What Just Happened in Exercise 2
+
+```mermaid {scale: 0.8}
+flowchart LR
+  subgraph GCP["GCP: Your Exercise Environment"]
+    direction TB
+    TSBIN["tailscale client<br/>(offline from Step 4)"]
+    GOW["Go Worker<br/>tsnet embedded in the process"]
+  end
+  subgraph VPS["DigitalOcean: VPS"]
+    T["temporal-dev"]
+  end
+  GOW <-. tailnet .-> T
+```
+
+<v-clicks>
+
+- The system `tailscale` binary was off the whole time your Worker ran
+- The Go Worker carried its own `tsnet` node inside the process and joined the `tailnet` itself
+- The Temporal Go SDK's gRPC calls routed through `tsNode.Dial` via `grpc.WithContextDialer`
+- Your Worker is now a first-class `tailnet` node, not a client of one
+
+</v-clicks>
 
 ---
 layout: toc
@@ -593,6 +645,97 @@ minutes: 15
 Complete the 3 TODOs. Run the tool-calling workflow first, then enable the agentic loop.
 
 Watch the multi-step reasoning in the Temporal UI.
+
+---
+
+# The Agent's Reasoning, Step by Step
+
+```mermaid {scale: 0.55}
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant W as Workflow
+  participant A as Aperture
+  participant L as OpenAI
+  participant T as Tool Activity
+  U->>W: "What's the weather where I am?"
+  W->>A: create(query, tools)
+  A->>L: /v1/responses
+  L-->>A: function_call: get_ip_address
+  A-->>W: function_call: get_ip_address
+  W->>T: get_ip_address()
+  T-->>W: 104.197.110.76
+  W->>A: create(query, tools, result)
+  A->>L: /v1/responses
+  L-->>A: function_call: get_location_info
+  A-->>W: function_call: get_location_info
+  W->>T: get_location_info(ip)
+  T-->>W: Council Bluffs, IA
+  W->>A: create(query, tools, result)
+  A->>L: /v1/responses
+  L-->>A: function_call: get_weather_alerts
+  A-->>W: function_call: get_weather_alerts
+  W->>T: get_weather_alerts(state)
+  T-->>W: alerts data
+  W->>A: create(query, tools, result)
+  A->>L: /v1/responses
+  L-->>A: final text
+  A-->>W: final text
+  W-->>U: natural-language answer
+```
+
+---
+
+# The LLM's Decision, Durably Recorded
+
+The agent's reasoning trace lives in Temporal's event history:
+
+```
+#5   ActivityTaskScheduled   activityType=create              (LLM call #1)
+#7   ActivityTaskCompleted                                    LLM returns function_call
+#11  ActivityTaskScheduled   activityType=get_ip_address      (LLM's decision)
+#17  ActivityTaskScheduled   activityType=create              (LLM call #2)
+#23  ActivityTaskScheduled   activityType=get_location_info   (LLM's decision)
+#29  ActivityTaskScheduled   activityType=create              (LLM call #3)
+#35  ActivityTaskScheduled   activityType=get_weather_alerts  (LLM's decision)
+#47  WorkflowExecutionCompleted
+```
+
+<v-clicks>
+
+- `activityType.name` on each `ActivityTaskScheduled` is the tool the LLM picked on that turn
+- Every LLM call, every tool choice, every result is persisted
+- Worker crash mid-loop? Replay reconstructs exact state and the agent resumes from where it left off
+
+</v-clicks>
+
+---
+
+# "You Can't Build Agents on Temporal"
+
+### The myth
+
+> Workflow code has to be deterministic. An LLM picking the next tool at runtime is the opposite of deterministic. So you can't build AI agents on Temporal.
+
+<v-click>
+
+### What you just did
+
+- The LLM picked `get_ip_address`, `get_location_info`, and `get_weather_alerts` at runtime
+- None of those names were hard-coded in your Workflow
+- Temporal ran them, recorded them, and would replay them on crash
+
+The Workflow stays deterministic because Temporal records the LLM's response as an activity result. On replay, the same result comes back and the same tool runs.
+
+</v-click>
+
+<br>
+
+<v-click>
+
+Read more: <a href="https://temporal.io/blog/of-course-you-can-build-dynamic-ai-agents-with-temporal">Of course you can build dynamic AI agents with Temporal</a>
+
+</v-click>
 
 ---
 layout: toc

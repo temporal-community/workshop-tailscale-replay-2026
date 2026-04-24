@@ -1,6 +1,3 @@
-# ABOUTME: Temporal Activity definitions for OpenAI API calls and dynamic tool dispatch.
-# ABOUTME: Includes the create activity for LLM calls and dynamic_tool_activity for tool execution.
-
 import inspect
 import os
 from collections.abc import Sequence
@@ -29,9 +26,9 @@ async def create(request: OpenAIResponsesRequest) -> Response:
     #
     # TODO 1: Route LLM calls through Aperture by setting the base_url.
     # Aperture proxies your requests to the LLM and enforces rate limits.
-    # Your Tailscale identity is used to track usage — no real API key lives on your machine.
+    # Your Tailscale identity is used to track usage, so no real API key lives on your machine.
     # Hint: Add base_url=f"{os.getenv('APERTURE_URL')}/v1" to the constructor below.
-    #       (The OpenAI SDK requires api_key to be set; pass api_key="" — Aperture ignores it.)
+    #       (The OpenAI SDK requires api_key to be set; pass api_key="" and Aperture will ignore it.)
     client = AsyncOpenAI(max_retries=0)
 
     return await client.responses.create(

@@ -10,14 +10,15 @@ notes:
     # AI Agent Time
 
     Now you'll build a durable AI weather agent. The LLM autonomously
-    chains tool calls — get your IP, geolocate it, fetch weather alerts —
-    all orchestrated by Temporal, all LLM calls secured through Aperture.
+    chains tool calls (get your IP, geolocate it, fetch weather alerts),
+    all orchestrated by Temporal, with every LLM call secured through
+    Aperture on the `tailnet`.
 tabs:
 - id: cd5f6dijn3vr
   title: Code Editor
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/03_weather_agent/practice
+  path: /root/workshop
 - id: dz8wzkrpjtxa
   title: Worker
   type: terminal
@@ -45,33 +46,49 @@ enhanced_loading: null
 
 # Exercise 3: Python Weather Agent
 
-Build a durable AI agent that chains tool calls — with all LLM requests secured through Aperture.
+Build a durable AI agent that chains tool calls, with all LLM requests secured through Aperture on the `tailnet`.
 
 ## Background
 
-This exercise has two phases:
+This exercise has two phases.
 
-**Phase A: Tool-Calling** — A simple workflow where the LLM decides whether to call a weather tool.
+**Phase A: Tool-Calling.** A simple Workflow where the LLM decides whether to call a single weather tool.
 
-**Phase B: Agentic Loop** — A full loop where the LLM reasons through multiple steps:
-1. "What's the weather where I am?" → calls `get_ip_address`
-2. Gets your IP → calls `get_location_info`
-3. Gets your city/state → calls `get_weather_alerts`
-4. Has enough info → responds with the weather
+**Phase B: Agentic Loop.** A full loop where the LLM reasons through multiple steps before answering:
 
-Every LLM call goes through **Aperture** instead of directly to OpenAI. Aperture holds the shared API key, identifies you by your Tailscale identity, and enforces rate limits.
+1. "What's the weather where I am?", calls `get_ip_address`
+2. Gets your IP, calls `get_location_info`
+3. Gets your city and state, calls `get_weather_alerts`
+4. Has enough info, responds with the weather
 
-> **Not on the tailnet?** If you joined late or `tailscale status` shows **Logged out**, run this in the **Worker** terminal first:
+Every LLM call goes through **Aperture** instead of directly to OpenAI. Aperture holds the shared API key, identifies you by your Tailscale identity, and enforces rate limits. The same pattern applies in Exercise 4 with Anthropic's Claude.
+
+## Environment
+
+All code for this exercise lives in `exercises/03_weather_agent/`. Inside that directory:
+
+- **`practice/`** is where you do your work. Each file has one or more **TODO** comments pointing at the change you need to make.
+- **`solution/`** contains the finished version of every file. If you get stuck or want to double-check your work, compare against the matching file in `solution/`. Don't run from `solution/`, run from `practice/`.
+
+> **Verify you're on the `tailnet`**
 >
+> Run the following command:
+> ```bash
+> tailscale status
+> ```
+>
+> If you see **Logged Out** then you need to reauthenticate to the `tailnet`
+>
+> Run the following command to authenticate to the `tailnet`
 > ```bash
 > tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
 > ```
 
-## Phase A: Tool-Calling
+## Step 1: Route LLM calls through Aperture
 
-### **TODO 1** - Route LLM calls through Aperture
+This step begins **Phase A: Tool-Calling**. The change is small but load-bearing. Instead of pointing the OpenAI client at `api.openai.com`, you point it at Aperture, the `tailnet`-only gateway that attaches your Tailscale identity, enforces rate limits, and swaps in the real API key server-side.
 
-Open `activities.py` in the **Code Editor** tab. Find **TODO 1** and add the Aperture base URL to the OpenAI client:
+Open `exercises/03_weather_agent/practice/activities.py` in the **Code Editor** tab. Find **TODO 1** and add the Aperture base URL to the OpenAI client:
 
 ```python
 client = AsyncOpenAI(
@@ -81,39 +98,53 @@ client = AsyncOpenAI(
 )
 ```
 
-This tells the OpenAI client to send requests to Aperture instead of `api.openai.com`.
+`APERTURE_URL` is already exported in your environment. The OpenAI client will now send requests to Aperture, which forwards them to OpenAI with the shared API key after attaching your Tailscale identity.
 
-### Run Phase A
+## Step 2: Start the Phase A Worker
 
-In the **Terminal** tab, start the worker:
+Now start the Worker. This is the process that executes the Workflow and its tool activities.
+
+In the **Worker** terminal:
 
 ```bash
-cd /root/workshop/exercises/03_weather_agent/practice
+cd exercises/03_weather_agent/practice
 uv run worker.py
 ```
 
-Open a **new terminal** (`+` button) and run the workflow:
+You should see the Worker connect to Temporal and start listening on its task queue.
+
+## Step 3: Run the Phase A Workflow
+
+With the Worker running, trigger the Workflow from the **Starter** terminal.
+
+In the **Starter** terminal:
 
 ```bash
-cd /root/workshop/exercises/03_weather_agent/practice
+cd exercises/03_weather_agent/practice
 uv run starter.py "What are the weather alerts in California?"
 ```
 
-You should see the LLM call the weather tool and return results. Check the **Temporal UI** tab to see the workflow.
+You should see the LLM call the weather tool and return results. Click the **Temporal UI** tab to find your Workflow and see the tool call execute as an activity.
 
-## Phase B: Agentic Loop
+**What happened**
 
-### **TODO 2** - Enable the loop
+Your Worker executed a Workflow where the LLM chose to call a tool instead of answering directly. The LLM call itself flowed through Aperture, which authenticated you by your Tailscale identity and forwarded the request to OpenAI with the shared API key. Your code never touched an OpenAI API key.
 
-Open `agent_workflow.py` in the Code Editor. Find **TODO 2** and change `False` to `True`:
+## Step 4: Enable the agentic loop
+
+This step begins **Phase B: Agentic Loop**. The difference from Phase A is that the Workflow now keeps handing the LLM tool results until the LLM decides it has enough information to answer, instead of stopping after one tool call.
+
+Open `exercises/03_weather_agent/practice/agent_workflow.py` in the **Code Editor** tab. Find **TODO 2** and change `False` to `True`:
 
 ```python
 while True:
 ```
 
-### **TODO 3** - Execute the dynamic activity
+This turns the single-shot tool call from Phase A into a loop that repeatedly calls the LLM, executes whichever tool the LLM picked, feeds the result back, and stops only when the LLM decides it's done.
 
-In the same file, find **TODO 3** and replace the empty string:
+## Step 5: Execute the chosen activity dynamically
+
+Still in `agent_workflow.py`, find **TODO 3** and replace the empty string with `item.name`:
 
 ```python
 tool_result = await workflow.execute_activity(
@@ -123,26 +154,45 @@ tool_result = await workflow.execute_activity(
 )
 ```
 
-`item.name` is the tool the LLM chose (like `"get_ip_address"`), and Temporal executes it as a dynamic activity.
+`item.name` is whichever tool the LLM picked on this iteration, such as `get_ip_address`, `get_location_info`, or `get_weather_alerts`. Temporal runs it as a dynamic activity, so the Worker does not hard-code which tool to call; Temporal dispatches by name.
 
-### Run Phase B
+## Step 6: Restart the Worker as the agent Worker
 
-Stop the previous worker (Ctrl+C), then start the agent worker:
+The Phase A Worker registered the single-shot tool-calling Workflow. For Phase B you need the agent Workflow registered, which means restarting the Worker with the `--agent` flag.
+
+In the **Worker** terminal, stop the previous Worker with `Ctrl+C`. You should still be in the `practice/` directory from Step 2, so start the agent Worker directly:
 
 ```bash
-cd /root/workshop/exercises/03_weather_agent/practice
 uv run worker.py --agent
 ```
 
-In the other terminal:
+You should see the Worker reconnect to Temporal and start listening on its task queue, this time with the agent Workflow registered.
+
+## Step 7: Run the agentic Workflow
+
+Now ask the agent a question that requires multiple tool calls to answer.
+
+In the **Starter** terminal:
 
 ```bash
-cd /root/workshop/exercises/03_weather_agent/practice
+cd exercises/03_weather_agent/practice
 uv run starter.py --agent "What's the weather like where I am right now?"
 ```
 
-Watch the worker logs — the LLM chains through multiple tools before responding. Check the **Temporal UI** to see each tool call as a separate activity.
+Watch the Worker logs. The LLM chains through multiple tools before responding: `get_ip_address`, then `get_location_info`, then `get_weather_alerts`, then a final answer. Click the **Temporal UI** tab to see each tool call as a separate activity inside one Workflow execution.
 
-## Stuck?
+**What happened**
 
-The solution files are in `/root/workshop/exercises/03_weather_agent/solution/`.
+The LLM made autonomous decisions about which tool to call next, and Temporal recorded every call, input, and output in the Workflow history. If the process had crashed halfway through, Temporal could replay the history on a new Worker and the agent would resume from exactly where it left off, even partway through a multi-tool reasoning chain.
+
+## Wrapping Up
+
+In this exercise you:
+
+- Pointed the OpenAI client at Aperture so LLM calls flow over the `tailnet` with Tailscale identity as the auth layer, not a client-side API key
+- Ran a tool-calling Workflow where the LLM chose a single tool
+- Turned that Workflow into an agentic loop where the LLM keeps calling tools until it has enough information to answer
+- Used Temporal's dynamic activities to dispatch whichever tool the LLM chose on each iteration
+- Watched Temporal record every LLM call and tool result as part of the Workflow history
+
+In the final exercise you'll combine the `tsnet` pattern from Exercise 2 with the Aperture pattern you just used, in a single Go service. A metrics watcher that scrapes a `tailnet`-only endpoint, asks Claude for a health summary, and runs on a Temporal Schedule.

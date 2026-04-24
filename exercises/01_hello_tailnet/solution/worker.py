@@ -1,6 +1,3 @@
-# ABOUTME: Temporal Worker for the Hello Tailnet exercise.
-# ABOUTME: Connects to the shared Temporal server using environment configuration.
-
 import asyncio
 import concurrent.futures
 import logging

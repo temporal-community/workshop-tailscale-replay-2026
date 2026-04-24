@@ -1,6 +1,3 @@
-// ABOUTME: Worker + starter for Exercise 2 Part 3 — hello-tsnet Go worker.
-// ABOUTME: TODOs walk through joining the tailnet via tsnet and dialing Temporal through it.
-
 package main
 
 import (
@@ -57,25 +54,21 @@ func startTsnet(userID, mode string) *tsnet.Server {
 	if err != nil {
 		log.Fatalf("user config dir: %v", err)
 	}
-	_ = configDir // used by TODO 1b below
+	_ = configDir // used by TODO 1 below
 
 	nodeName, err := resolveNodeName(configDir, userID, mode)
 	if err != nil {
 		log.Fatalf("resolve node name: %v", err)
 	}
-	_ = nodeName // used by TODO 1a and 1b below
+	_ = nodeName // used by TODO 1 below
 
 	tsNode := &tsnet.Server{
-		// TODO 1a: Set Hostname to nodeName
-		//          — this is the name your node will have on the tailnet.
+		// TODO 1: Configure the tsnet.Server so this process joins the tailnet.
+		//   Hostname: nodeName
+		//   Dir:      filepath.Join(configDir, "workshop-tsnet", nodeName)
+		//   AuthKey:  os.Getenv("TS_AUTHKEY")
 		Hostname:
-
-		// TODO 1b: Set Dir to filepath.Join(configDir, "workshop-tsnet", nodeName)
-		//          — tsnet stores its node key here so later runs reuse the identity.
 		Dir:
-
-		// TODO 1c: Set AuthKey to os.Getenv("TS_AUTHKEY")
-		//          — consumed once on first run to register the node.
 		AuthKey:
 	}
 	if err := tsNode.Start(); err != nil {
