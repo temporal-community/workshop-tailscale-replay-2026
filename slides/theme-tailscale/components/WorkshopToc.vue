@@ -1,7 +1,7 @@
 <!--
   Workshop table of contents. Rendered once before each section divider
   with `current` set to the id of the section we're about to enter.
-  Active row is highlighted in mint; the rest read as muted Inter Light.
+  Active row is highlighted in Tailscale coral; the rest read as muted charcoal.
 -->
 <script setup lang="ts">
 defineProps<{ current?: string }>()
@@ -45,8 +45,8 @@ const sections = [
   align-items: baseline;
   gap: 1.25rem;
   padding: 0.1rem 0;
-  color: var(--temporal-text-muted);
-  font-weight: 300;
+  color: var(--tailscale-text-muted);
+  font-weight: 400;
   font-size: 1.5rem;
   transition: color 150ms ease;
 }
@@ -54,17 +54,17 @@ const sections = [
   font-variant-numeric: tabular-nums;
   font-size: 1.05rem;
   letter-spacing: 0.1em;
-  color: var(--temporal-text-muted);
-  opacity: 0.65;
+  color: var(--tailscale-text-muted);
+  opacity: 0.7;
 }
 .workshop-toc li.active {
-  color: #ffffff;
+  color: var(--tailscale-text-strong);
 }
 .workshop-toc li.active .number {
-  color: var(--temporal-green);
+  color: var(--tailscale-coral);
   opacity: 1;
 }
 .workshop-toc li.active .label {
-  font-weight: 400;
+  font-weight: 600;
 }
 </style>

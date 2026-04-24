@@ -8,6 +8,7 @@
   },
   "packageManager": "pnpm@10.33.0",
   "dependencies": {
+    "slidev-theme-tailscale": "link:./theme-tailscale",
     "slidev-theme-temporal": "link:./theme-temporal"
   },
   "devDependencies": {

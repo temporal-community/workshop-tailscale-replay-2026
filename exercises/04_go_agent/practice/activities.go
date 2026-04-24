@@ -10,6 +10,7 @@ import (
 
 	anthropic "github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
+	"go.temporal.io/sdk/activity"
 )
 
 type HealthReport struct {
@@ -42,6 +43,7 @@ func NewActivities(httpClient *http.Client, metricsURL, aiURL, aiModel string) *
 }
 
 func (a *Activities) FetchMetrics(ctx context.Context) (string, error) {
+	activity.GetLogger(ctx).Info("FetchMetrics: scraping metrics", "url", a.MetricsURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, a.MetricsURL, nil)
 	if err != nil {
 		return "", err
@@ -62,6 +64,7 @@ func (a *Activities) FetchMetrics(ctx context.Context) (string, error) {
 }
 
 func (a *Activities) AnalyzeMetrics(ctx context.Context, metrics string) (HealthReport, error) {
+	activity.GetLogger(ctx).Info("AnalyzeMetrics: asking Claude for a health summary", "model", a.aiModel, "bytes", len(metrics))
 	prompt := `You are a system health analyst. Given the following Prometheus node_exporter metrics, respond with ONLY a JSON object, no prose, no markdown, no code fences. Use exactly these keys:
 
 {

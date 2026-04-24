@@ -72,15 +72,13 @@ All code for this exercise lives in `exercises/03_weather_agent/`. Inside that d
 
 > **Verify you're on the `tailnet`**
 >
-> Run the following command:
-> ```bash
+> In the [button label="Worker" background="#444CE7"](tab-1) terminal:
+> ```bash,run
 > tailscale status
 > ```
 >
-> If you see **Logged Out** then you need to reauthenticate to the `tailnet`
->
-> Run the following command to authenticate to the `tailnet`
-> ```bash
+> If you see **Logged Out**, reauthenticate:
+> ```bash,run
 > tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
 > ```
 
@@ -88,7 +86,7 @@ All code for this exercise lives in `exercises/03_weather_agent/`. Inside that d
 
 This step begins **Phase A: Tool-Calling**. The change is small but load-bearing. Instead of pointing the OpenAI client at `api.openai.com`, you point it at Aperture, the `tailnet`-only gateway that attaches your Tailscale identity, enforces rate limits, and swaps in the real API key server-side.
 
-Open `exercises/03_weather_agent/practice/activities.py` in the **Code Editor** tab. Find **TODO 1** and add the Aperture base URL to the OpenAI client:
+Open `exercises/03_weather_agent/practice/activities.py` in the [button label="Code Editor" background="#444CE7"](tab-0) tab. Find **TODO 1** and add the Aperture base URL to the OpenAI client:
 
 ```python
 client = AsyncOpenAI(
@@ -98,15 +96,17 @@ client = AsyncOpenAI(
 )
 ```
 
+> **Heads up on paste indentation.** Python is whitespace-sensitive. If you copy the snippet above and paste over the existing `AsyncOpenAI(...)` call, double-check that every line inside the parens ends up at the same 4-space indent as the surrounding function body. A stray tab or extra spaces will throw an `IndentationError` at worker start.
+
 `APERTURE_URL` is already exported in your environment. The OpenAI client will now send requests to Aperture, which forwards them to OpenAI with the shared API key after attaching your Tailscale identity.
 
 ## Step 2: Start the Phase A Worker
 
 Now start the Worker. This is the process that executes the Workflow and its tool activities.
 
-In the **Worker** terminal:
+In the [button label="Worker" background="#444CE7"](tab-1) terminal:
 
-```bash
+```bash,run
 cd exercises/03_weather_agent/practice
 uv run worker.py
 ```
@@ -115,16 +115,14 @@ You should see the Worker connect to Temporal and start listening on its task qu
 
 ## Step 3: Run the Phase A Workflow
 
-With the Worker running, trigger the Workflow from the **Starter** terminal.
+With the Worker running, trigger the Workflow from the [button label="Starter" background="#444CE7"](tab-2) terminal.
 
-In the **Starter** terminal:
-
-```bash
+```bash,run
 cd exercises/03_weather_agent/practice
 uv run starter.py "What are the weather alerts in California?"
 ```
 
-You should see the LLM call the weather tool and return results. Click the **Temporal UI** tab to find your Workflow and see the tool call execute as an activity.
+You should see the LLM call the weather tool and return results. Click the [button label="Temporal UI" background="#444CE7"](tab-3) tab to find your Workflow and see the tool call execute as an activity.
 
 > **Note:** If the **Temporal UI** tab shows a connection error or stale content, click the refresh button at the top of the tab. The iframe can hold an old render from before the `tailnet` was ready.
 
@@ -136,7 +134,7 @@ Your Worker executed a Workflow where the LLM chose to call a tool instead of an
 
 This step begins **Phase B: Agentic Loop**. The difference from Phase A is that the Workflow now keeps handing the LLM tool results until the LLM decides it has enough information to answer, instead of stopping after one tool call.
 
-Open `exercises/03_weather_agent/practice/agent_workflow.py` in the **Code Editor** tab. Find **TODO 2** and change `False` to `True`:
+Open `exercises/03_weather_agent/practice/agent_workflow.py` in the [button label="Code Editor" background="#444CE7"](tab-0) tab. Find **TODO 2** and change `False` to `True`:
 
 ```python
 while True:
@@ -162,9 +160,9 @@ tool_result = await workflow.execute_activity(
 
 The Phase A Worker registered the single-shot tool-calling Workflow. For Phase B you need the agent Workflow registered, which means restarting the Worker with the `--agent` flag.
 
-In the **Worker** terminal, stop the previous Worker with `Ctrl+C`. You should still be in the `practice/` directory from Step 2, so start the agent Worker directly:
+In the [button label="Worker" background="#444CE7"](tab-1) terminal, stop the previous Worker with `Ctrl+C`. You should still be in the `practice/` directory from Step 2, so start the agent Worker directly:
 
-```bash
+```bash,run
 uv run worker.py --agent
 ```
 
@@ -174,13 +172,13 @@ You should see the Worker reconnect to Temporal and start listening on its task 
 
 Now ask the agent a question that requires multiple tool calls to answer.
 
-In the **Starter** terminal:
+In the [button label="Starter" background="#444CE7"](tab-2) terminal:
 
-```bash
+```bash,run
 uv run starter.py --agent "What's the weather like where I am right now?"
 ```
 
-Watch the Worker logs. The LLM chains through multiple tools before responding: `get_ip_address`, then `get_location_info`, then `get_weather_alerts`, then a final answer. Click the **Temporal UI** tab to see each tool call as a separate activity inside one Workflow execution.
+Watch the Worker logs. The LLM chains through multiple tools before responding: `get_ip_address`, then `get_location_info`, then `get_weather_alerts`, then a final answer. Click the [button label="Temporal UI" background="#444CE7"](tab-3) tab to see each tool call as a separate activity inside one Workflow execution.
 
 **What happened**
 

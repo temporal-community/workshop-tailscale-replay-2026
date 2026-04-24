@@ -1,5 +1,5 @@
 ---
-theme: ./theme-temporal
+theme: ./theme-tailscale
 title: Securing AI Applications with Tailscale and Temporal
 info: |
   ## Replay 2026 Workshop
@@ -153,6 +153,72 @@ Your Instruqt VM is already connected. The shared Temporal server is just `tempo
 </v-click>
 
 ---
+layout: section
+---
+
+# It's too easy to put private things on the public internet.
+
+---
+layout: two-cols
+---
+
+# So you hide it behind a VPN
+
+<br>
+
+<v-clicks>
+
+- Centralized hubs become bottlenecks
+- Switching VPNs per region, dropped connections
+- Broad access grants that never scale back
+- Agents break the "everything in one place" assumption
+
+</v-clicks>
+
+::right::
+
+<img src="./assets/tailscale/vpn-hub-pain.png" alt="Traditional VPN hub with gateways, approved users, and unapproved users" class="tailscale-figure" />
+
+---
+
+# Tailscale moves identity down the stack
+
+Most networking tools push identity up to **Layer 7** (the application) or **Layer 5** (the session).
+
+Tailscale brings identity and **WireGuard** all the way down to **Layer 3 — the network itself**.
+
+<br>
+
+<v-clicks>
+
+- Connections authenticate **before** they happen
+- Every device has a network identity, not just an IP
+- Access policies are defined in code: per user, per group, per service
+- If one device is compromised, the blast radius is tiny
+
+</v-clicks>
+
+---
+layout: two-cols
+---
+
+# Everything connects on one network
+
+Once devices join the tailnet, nodes reach each other directly over encrypted WireGuard.
+
+<v-clicks>
+
+- No central choke point, no concentrators
+- Every node is both client and server
+- Access follows identity, device, and policy
+
+</v-clicks>
+
+::right::
+
+<img src="./assets/tailscale/identity-layer3-mesh.png" alt="Identity provider authenticating into a Layer-3 mesh network of devices" class="tailscale-figure" />
+
+---
 
 # What is Aperture?
 
@@ -172,6 +238,112 @@ Your Instruqt VM is already connected. The shared Temporal server is just `tempo
 Your LLM calls go to Aperture's endpoint instead of `api.openai.com`. Aperture forwards them with the real key and tracks your usage.
 
 </v-click>
+
+---
+layout: two-cols
+---
+
+# Aperture by Tailscale
+
+A **centralized gateway** for your AI tools. No API keys in developer hands.
+
+<v-clicks>
+
+- Identity-based access in front of every model
+- One pane of glass across Claude Code, Codex, agents
+- Policy you can audit, version, and enforce
+
+</v-clicks>
+
+::right::
+
+<img src="./assets/tailscale/aperture-architecture.png" alt="Aperture sitting between users, agents, and LLM APIs" class="tailscale-figure" />
+
+---
+
+# Every AI call, cryptographically attributed
+
+You can't secure what you can't see.
+
+<br>
+
+<v-clicks>
+
+- Every request leaves a cryptographically verified trail
+- Real-time token usage, model spend, and per-user attribution
+- Session-level logs for debugging, tracing, and forensics
+- Enforce guardrails across MCP and non-MCP tool calls
+
+</v-clicks>
+
+---
+
+# Why embed Tailscale into applications?
+
+<v-clicks>
+
+- **Network identity for the app itself** — not just the machine it runs on
+- **Reach it over the tailnet** without exposing it publicly
+- **Decouple app access** from host-level network setup
+
+</v-clicks>
+
+<v-click>
+
+```mermaid {scale: 0.6}
+flowchart LR
+  subgraph Without["Without tsnet"]
+    direction LR
+    A1["Go app"] --> H["host networking"] --> T1["Tailscale on machine"] --> N1["tailnet"]
+  end
+  subgraph With["With tsnet"]
+    direction LR
+    A2["Go app + tsnet"] --> N2["tailnet"]
+  end
+```
+
+</v-click>
+
+<v-click>
+
+`tsnet` moves the network boundary from **machine to application**.
+
+</v-click>
+
+---
+layout: two-cols
+---
+
+# tsnet vs host-level Tailscale
+
+### Host-level Tailscale
+
+- The **machine** joins the tailnet
+- All apps on the box inherit its connectivity
+- Best when one host identity is enough
+
+```mermaid {scale: 0.55}
+flowchart LR
+  A["App A"] --> H["Host + TS"]
+  B["App B"] --> H
+  C["App C"] --> H
+  H --> N["tailnet"]
+```
+
+::right::
+
+### `tsnet`
+
+- A Go app joins the tailnet **directly**
+- Each app has its own identity + policy boundary
+- Best when the service is its own network citizen
+
+```mermaid {scale: 0.55}
+flowchart LR
+  A["App A + tsnet"] --> N["tailnet"]
+  B["App B + tsnet"] --> N
+  C["App C"] --> Host["host networking"]
+```
 
 ---
 layout: two-cols
@@ -216,18 +388,53 @@ Anyone on the tailnet can reach it, nobody else can.
 How the workshop server is running right now:
 
 ```bash
-temporal ts-net \
-    --db-filename /var/lib/temporal/workshop.db \
-    --max-connections 500 \
-    --connection-rate-limit 50
+temporal ts-net
 ```
 
 <v-clicks>
 
-- **Temporal CLI extension** - runs `temporal server start-dev` and joins it to the tailnet
+- **Temporal CLI extension** - wraps `temporal server start-dev` and joins it to the tailnet
 - **No public exposure** - the server is only reachable via Tailscale
-- **Supports gRPC + Web UI** - `temporal-dev:7233` and `temporal-dev:8233`
-- **Built with tsnet** - Go library for embedding Tailscale in applications
+- **gRPC + Web UI on the tailnet** - `temporal-dev:7233` and `temporal-dev:8233`
+- **Open source** - [github.com/temporal-community/temporal-ts-net](https://github.com/temporal-community/temporal-ts-net)
+
+</v-clicks>
+
+---
+
+# Workshop Environment
+
+Your Exercise Environment already has these exported for you.
+
+<div class="compact-table">
+
+| Variable | What it's for | Used in |
+|---|---|---|
+| `WORKSHOP_USER_ID` | Your name, from sign-up. Goes into Workflow IDs, task queues, tsnet hostnames | 1, 2, 3, 4 |
+| `TS_AUTHKEY` | Tailscale auth key for joining the tailnet | 1, 2, 4 |
+| `TEMPORAL_CONFIG_FILE` | Points the Python SDK at `temporal.toml` | 1, 3 |
+| `APERTURE_URL` | Base URL for the shared LLM gateway | 3, 4 |
+
+</div>
+
+<style>
+.compact-table :deep(td),
+.compact-table :deep(th) {
+  padding: 0.4rem 0.65rem;
+  font-size: 1.25rem;
+}
+</style>
+
+---
+
+# `practice/` and `solution/`
+
+Every exercise directory follows the same layout:
+
+<v-clicks>
+
+- **`practice/`** - where you work. Files contain **TODO** comments pointing at the change you need to make.
+- **`solution/`** - finished version. Reference if you get stuck, don't run from here.
 
 </v-clicks>
 
@@ -246,29 +453,26 @@ layout: section
 
 # Exercise 1: What You'll Do
 
-<br>
-
 ### Goal
 Prove the tailnet works. Run a workflow on the shared Temporal server.
 
-<br>
-
 ### Steps
 
-1. **Create `temporal.toml`** - configure the `tailnet` profile
-2. **Add your user ID** to the workflow ID
-3. **Start a worker** -> it connects to `temporal-dev:7233`
-4. **Run the workflow** -> get your IP and geolocation
-5. **Open the Temporal UI** -> see your workflow alongside everyone else's
+1. **Join the tailnet** -> `tailscale up --auth-key="$TS_AUTHKEY"`
+2. **Point your Client at the `tailnet` profile** in `temporal.toml`
+3. **Add your user ID** to the workflow ID
+4. **Start a worker** -> it connects to `temporal-dev:7233`
+5. **Run the workflow** -> get your IP and geolocation
+6. **Open the Temporal UI** -> find your workflow among everyone else's
 
 ---
 
 # Temporal Environment Configuration
 
-Instead of hardcoding addresses, use a **config file**:
+Keep connection settings in a **config file**, not your code:
 
 ```toml
-# ~/.config/temporalio/temporal.toml
+# temporal.toml (TEMPORAL_CONFIG_FILE points the SDK here)
 
 [profile.default]
 address = "localhost:7233"
@@ -279,42 +483,42 @@ address = "temporal-dev:7233"
 namespace = "default"
 ```
 
-<br>
+---
 
-The SDK reads this automatically:
+# Picking a Profile in Code
 
 ```python
-config = ClientConfig.load_client_connect_config()
+config = ClientConfig.load_client_connect_config(profile="tailnet")
 client = await Client.connect(**config)
 ```
 
 <v-click>
 
-Set `TEMPORAL_PROFILE=tailnet` and every worker, starter, and CLI command connects to the right server.
+Same worker and starter code works locally (`default`), on the workshop tailnet (`tailnet`), or in prod. Swap a profile, not your code.
 
 </v-click>
 
 ---
 
-# Exercise 1: Commands
+# Tailscale Commands
 
-1. **Open `temporal.toml`** in the Code Editor. `TEMPORAL_CONFIG_FILE` already points the SDK at it. Two profiles: `default` (localhost) and `tailnet` (shared server).
+Two commands drive the Tailscale client on any machine:
 
-2. **Start the worker.**
+```bash
+tailscale up
+```
 
-    ```bash
-    cd exercises/01_hello_tailnet/practice
-    uv run worker.py
-    ```
+```bash
+tailscale down
+```
 
-3. **Run the workflow.**
+<v-clicks>
 
-    ```bash
-    cd exercises/01_hello_tailnet/practice
-    uv run starter.py
-    ```
+- **`--auth-key`** - non-interactive auth. Without it, `up` opens a browser for SSO.
+- **`--hostname`** - what this node shows up as in `tailscale status` and `whois`. Uniqueness matters on a shared tailnet.
+- **`tailscale down`** - leaves the tailnet. The node stays registered; a future `up` reuses its identity.
 
-4. **Check the UI** at **http://temporal-dev:8233**.
+</v-clicks>
 
 ---
 layout: exercise
@@ -322,9 +526,9 @@ heading: Exercise 1
 minutes: 15
 ---
 
-Create `temporal.toml`, add your user ID, run the geo-IP workflow.
+Join the tailnet, point the Client at the `tailnet` profile, and run the geo-IP workflow.
 
-Open the Temporal UI and find your workflow.
+Open the Temporal UI and find your workflow among everyone else's.
 
 ---
 
@@ -365,44 +569,38 @@ layout: section
 
 ---
 
-# Exercise 2: Your Tailscale Network
+# Exercise 2: What You'll Do
 
-<br>
+### Part 1: Explore the tailnet from the CLI
+- `tailscale status` -> every node you can reach
+- `tailscale ping temporal-dev` -> direct WireGuard vs. DERP relay
+- `tailscale whois` -> your identity on the tailnet
 
-### Discover what's on the tailnet
-
-```bash
-tailscale status        # See all machines
-tailscale ping temporal-dev   # Direct encrypted connection
-tailscale whois $(tailscale ip -4)   # Your identity
-```
-
-<v-clicks>
-
-- Your VM, the Temporal server, Aperture, and every other attendee
-- Direct WireGuard connections - no relay servers
-- Your identity is automatic - Aperture uses it for rate limiting
-
-</v-clicks>
+### Part 2: Embed the tailnet in a Go worker
+Take the system Tailscale client offline, then run a worker that puts **itself** on the tailnet via `tsnet`. The worker becomes a first-class tailnet node, not a client of one.
 
 ---
 
-# How Aperture Secures Your LLM Calls
+# What the Go Worker Does in Ex2
 
-<!-- KARTIK: Replace this slide with your Aperture content -->
+Two small changes in `main.go` put the worker process on the tailnet and route Temporal traffic through it.
 
-```mermaid {scale: 0.8}
-sequenceDiagram
-  autonumber
-  participant Worker as Your Worker
-  participant AP as Aperture
-  participant OAI as OpenAI
-  Worker->>AP: POST /v1/responses<br/>(no API key needed)
-  Note over AP: Identity: your-worker<br/>Rate: 3 / 10 requests
-  AP->>OAI: POST /v1/responses<br/>Authorization: Bearer sk-real-openai-key
-  OAI-->>AP: response
-  AP-->>Worker: response
-```
+<br>
+
+<v-clicks>
+
+1. **Configure a `tsnet.Server`** with a hostname, a state directory, and `TS_AUTHKEY`. When it starts, the process has its own tailnet IP.
+2. **Plug `tsNode.Dial` into the Temporal gRPC client** via `grpc.WithContextDialer`. Every byte the SDK sends flows over the tailnet.
+
+</v-clicks>
+
+<br>
+
+<v-click>
+
+No host-level Tailscale required. No network plumbing. The worker *is* a tailnet node.
+
+</v-click>
 
 ---
 layout: exercise
@@ -410,15 +608,13 @@ heading: Exercise 2
 minutes: 15
 ---
 
-Explore your Tailscale network.
-
-Run `tailscale status`, ping the server, check your identity.
+Explore the tailnet from the CLI, then fill in the two TODOs in `main.go` so the Go worker joins the tailnet on its own and dials Temporal through it.
 
 ---
 
 # What Just Happened in Exercise 2
 
-```mermaid {scale: 0.8}
+```mermaid {scale: 0.55}
 flowchart LR
   subgraph GCP["GCP: Your Exercise Environment"]
     direction TB
@@ -435,7 +631,7 @@ flowchart LR
 
 - The system `tailscale` binary was off the whole time your Worker ran
 - The Go Worker carried its own `tsnet` node inside the process and joined the `tailnet` itself
-- The Temporal Go SDK's gRPC calls routed through `tsNode.Dial` via `grpc.WithContextDialer`
+- Temporal's gRPC calls routed through `tsNode.Dial` via `grpc.WithContextDialer`
 - Your Worker is now a first-class `tailnet` node, not a client of one
 
 </v-clicks>
@@ -481,7 +677,7 @@ One LLM call decides, one activity executes, one final LLM call formats. Simple.
 
 The LLM reasons through **multiple steps** autonomously:
 
-```mermaid {scale: 0.7}
+```mermaid {scale: 0.55}
 flowchart TD
   U["User: 'What's the weather where I am?'"]
   subgraph Loop["Agentic Loop, repeats until LLM is done"]
@@ -530,6 +726,25 @@ tool_result = await workflow.execute_activity(
 
 ---
 
+# How Aperture Secures Your LLM Calls
+
+<!-- KARTIK: Replace this slide with your Aperture content -->
+
+```mermaid {scale: 0.8}
+sequenceDiagram
+  autonumber
+  participant Worker as Your Worker
+  participant AP as Aperture
+  participant OAI as OpenAI
+  Worker->>AP: POST /v1/responses<br/>(no API key needed)
+  Note over AP: Identity: your-worker<br/>Rate: 3 / 10 requests
+  AP->>OAI: POST /v1/responses<br/>Authorization: Bearer sk-real-openai-key
+  OAI-->>AP: response
+  AP-->>Worker: response
+```
+
+---
+
 # How Aperture Fits the Agent
 
 Every `create` activity call goes through Aperture:
@@ -539,20 +754,15 @@ Every `create` activity call goes through Aperture:
 async def create(request: OpenAIResponsesRequest) -> Response:
     client = AsyncOpenAI(
         max_retries=0,
-        base_url=f"{os.getenv('APERTURE_URL')}/v1",  # Aperture
-        api_key="",  # Aperture ignores this; identity comes from Tailscale
+        base_url=f"{os.getenv('APERTURE_URL')}/v1",
+        api_key="",  # Aperture ignores this; identity = Tailscale
     )
-    return await client.responses.create(
-        model=request.model,
-        instructions=request.instructions,
-        input=request.input,
-        tools=request.tools,
-    )
+    return await client.responses.create(...)
 ```
 
 <v-click>
 
-The tool execution activities (weather, IP, location) call **free public APIs** directly. Only the LLM calls need Aperture.
+Tool activities (weather, IP, location) call **free public APIs** directly. Only the LLM calls need Aperture.
 
 </v-click>
 
@@ -571,25 +781,21 @@ layout: section
 
 # Exercise 3: TODO 1
 
-<br>
+**Route LLM calls through Aperture.** In `activities.py`, add `base_url` to the OpenAI client:
 
-1. **Route LLM calls through Aperture.** In `activities.py`, add `base_url` to the OpenAI client:
-
-    ```python
-    client = AsyncOpenAI(
-        max_retries=0,
-        base_url=f"{os.getenv('APERTURE_URL')}/v1",
-        api_key="",
-    )
-    ```
-
-<br>
+```python
+client = AsyncOpenAI(
+    max_retries=0,
+    base_url=f"{os.getenv('APERTURE_URL')}/v1",
+    api_key="",
+)
+```
 
 Then run the **tool-calling workflow**:
 
 ```bash
-uv run worker.py                    # Terminal 1
-uv run starter.py "Weather alerts in California?"  # Terminal 2
+uv run worker.py                                     # Terminal 1
+uv run starter.py "Weather alerts in California?"    # Terminal 2
 ```
 
 ---
@@ -618,8 +824,6 @@ uv run starter.py "Weather alerts in California?"  # Terminal 2
 
 # Exercise 3: Run the Agent
 
-<br>
-
 ```bash
 # Terminal 1 - start the agent worker
 uv run worker.py --agent
@@ -628,12 +832,10 @@ uv run worker.py --agent
 uv run starter.py --agent "What's the weather like where I am?"
 ```
 
-<br>
-
 ### What to watch for
 
-- **Worker logs** - see the LLM chain: `get_ip_address` -> `get_location_info` -> `get_weather_alerts`
-- **Temporal UI** - each tool call appears as a separate activity in the workflow history
+- **Worker logs** - LLM chain: `get_ip_address` -> `get_location_info` -> `get_weather_alerts`
+- **Temporal UI** - each tool call is a separate activity in the workflow history
 - **The response** - a natural language answer with your local weather
 
 ---
@@ -659,27 +861,15 @@ sequenceDiagram
   participant L as OpenAI
   participant T as Tool Activity
   U->>W: "What's the weather where I am?"
-  W->>A: create(query, tools)
-  A->>L: /v1/responses
-  L-->>A: function_call: get_ip_address
-  A-->>W: function_call: get_ip_address
-  W->>T: get_ip_address()
-  T-->>W: 104.197.110.76
-  W->>A: create(query, tools, result)
-  A->>L: /v1/responses
-  L-->>A: function_call: get_location_info
-  A-->>W: function_call: get_location_info
-  W->>T: get_location_info(ip)
-  T-->>W: Council Bluffs, IA
-  W->>A: create(query, tools, result)
-  A->>L: /v1/responses
-  L-->>A: function_call: get_weather_alerts
-  A-->>W: function_call: get_weather_alerts
-  W->>T: get_weather_alerts(state)
-  T-->>W: alerts data
-  W->>A: create(query, tools, result)
-  A->>L: /v1/responses
-  L-->>A: final text
+  loop Until LLM decides it has enough info
+    W->>A: create(query, tools, prior results)
+    A->>L: /v1/responses
+    L-->>A: function_call: <tool name>
+    A-->>W: function_call
+    W->>T: <tool>(args)
+    T-->>W: tool result
+  end
+  W->>A: create(query, tools, all results)
   A-->>W: final text
   W-->>U: natural-language answer
 ```
@@ -691,21 +881,19 @@ sequenceDiagram
 The agent's reasoning trace lives in Temporal's event history:
 
 ```
-#5   ActivityTaskScheduled   activityType=create              (LLM call #1)
-#7   ActivityTaskCompleted                                    LLM returns function_call
-#11  ActivityTaskScheduled   activityType=get_ip_address      (LLM's decision)
-#17  ActivityTaskScheduled   activityType=create              (LLM call #2)
-#23  ActivityTaskScheduled   activityType=get_location_info   (LLM's decision)
-#29  ActivityTaskScheduled   activityType=create              (LLM call #3)
-#35  ActivityTaskScheduled   activityType=get_weather_alerts  (LLM's decision)
+#5   ActivityTaskScheduled   activityType=create
+#11  ActivityTaskScheduled   activityType=get_ip_address
+#17  ActivityTaskScheduled   activityType=create
+#23  ActivityTaskScheduled   activityType=get_location_info
+#35  ActivityTaskScheduled   activityType=get_weather_alerts
 #47  WorkflowExecutionCompleted
 ```
 
 <v-clicks>
 
-- `activityType.name` on each `ActivityTaskScheduled` is the tool the LLM picked on that turn
+- Each `activityType` tells you which tool the LLM picked on that turn
 - Every LLM call, every tool choice, every result is persisted
-- Worker crash mid-loop? Replay reconstructs exact state and the agent resumes from where it left off
+- Worker crash mid-loop? Replay resumes the agent where it left off
 
 </v-clicks>
 
@@ -725,9 +913,13 @@ The agent's reasoning trace lives in Temporal's event history:
 - None of those names were hard-coded in your Workflow
 - Temporal ran them, recorded them, and would replay them on crash
 
-The Workflow stays deterministic because Temporal records the LLM's response as an activity result. On replay, the same result comes back and the same tool runs.
-
 </v-click>
+
+---
+
+# Why It Still Works
+
+The Workflow stays deterministic because Temporal records the LLM's response as an activity result. On replay, the same result comes back and the same tool runs.
 
 <br>
 
@@ -775,94 +967,68 @@ uv run starter.py --agent "What's the weather like where I am?"
 
 ---
 layout: toc
-current: tsnet
+current: ex4
 ---
 
 ---
 layout: section
 ---
 
-# temporal-ts-net and Metrics Watcher
-
----
-
-# How the Dev Server Got on the Tailnet
-
-```go
-// temporal-ts-net creates a tsnet.Server and proxies TCP connections
-tsSrv := &tsnet.Server{
-    Hostname: "temporal-dev",
-    AuthKey:  os.Getenv("TS_AUTHKEY"),
-}
-tsSrv.Start()
-
-// Listens on the tailnet, proxies to localhost:7233
-listener, _ := tsSrv.Listen("tcp", ":7233")
-for {
-    conn, _ := listener.Accept()
-    go proxy(conn, "localhost:7233")
-}
-```
-
-<v-clicks>
-
-- **6 lines** to put any TCP service on a Tailscale network
-- Built as a **Temporal CLI extension** - `temporal ts-net`
-- Supports rate limiting, max connections, idle timeouts
-- Open source: [github.com/temporal-community/temporal-ts-net](https://github.com/temporal-community/temporal-ts-net)
-
-</v-clicks>
-
----
-
-# Your Worker Can Join the Tailnet Too
-
-The same `tsnet` library works from the client side. Your Go worker becomes a node on the tailnet:
-
-```go
-ts := &tsnet.Server{
-    Hostname: fmt.Sprintf("%s-metrics-worker", userID),
-    AuthKey:  os.Getenv("TS_AUTHKEY"),
-}
-ts.Start()
-
-// Dial any tailnet service directly
-grpcConn, _ := ts.Dial(ctx, "tcp", "temporal-dev:7233")
-httpClient := &http.Client{Transport: &http.Transport{DialContext: ts.Dial}}
-metrics, _ := httpClient.Get("http://metrics-server:9100/metrics")
-```
-
-<v-clicks>
-
-- Same `tsnet.Server`, different role: client this time, not listener
-- Works for gRPC (Temporal) and HTTP (Aperture, `node_exporter`)
-- Hostname becomes your identity on the tailnet
-
-</v-clicks>
-
----
-
 # Exercise 4: Metrics Watcher
 
-**Exercise 4.** A finished Go worker scrapes `node_exporter` metrics off a tailnet node and asks Claude via Aperture to write a health report on a schedule.
+---
 
-```go
-func HealthCheckWorkflow(ctx workflow.Context) (HealthReport, error) {
-    ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-        StartToCloseTimeout: 30 * time.Second,
-    })
-    var act *Activities
+# Temporal Schedules
 
-    var metrics string
-    workflow.ExecuteActivity(ctx, act.FetchMetrics).Get(ctx, &metrics)
+Run the same workflow on a cadence, durably, without a cron daemon.
 
-    var report HealthReport
-    workflow.ExecuteActivity(ctx, act.AnalyzeMetrics, metrics).Get(ctx, &report)
-    return report, nil
-}
+<v-clicks>
+
+- **Schedules live on the Temporal server**, not the worker. Restarting a worker doesn't touch them.
+- **`TriggerImmediately`** fires one run at creation time, then resumes the interval.
+- **`RemainingActions`** caps how many times the Schedule can fire before it pauses itself - a guardrail on a shared dev server.
+- **Re-run the starter to change the cadence.** It deletes and recreates the Schedule; the worker keeps running.
+
+</v-clicks>
+
+---
+
+# Ex4 Topology
+
+The Go worker joins the tailnet once via `tsnet` and reaches three services over it.
+
+```mermaid {scale: 0.55}
+flowchart LR
+  subgraph VM["Your Exercise Environment"]
+    GOW["Go Worker<br/>(tsnet inside the process)"]
+  end
+  T["temporal-dev:7233<br/>(Temporal Server)"]
+  M["metrics-server:9100<br/>(node_exporter)"]
+  A["Aperture<br/>(LLM gateway)"]
+  C["Anthropic API<br/>(Claude, shared key)"]
+  GOW <-. tailnet .-> T
+  GOW <-. tailnet .-> M
+  GOW <-. tailnet .-> A
+  A --> C
 ```
 
-New pieces: tsnet in the worker, a Temporal Schedule, Claude instead of OpenAI. Same tailnet, same Aperture.
+Same `tsnet` as Ex2, same Aperture as Ex3. Now with Claude, and a Temporal Schedule firing on a cadence.
+
+---
+
+# Exercise 4: What You'll Do
+
+No TODOs this time. The code is done, read it, run it, tune it.
+
+<v-clicks>
+
+1. **Skim the code** - scavenger hunt for the interval default, Schedule cap, and activities.
+2. **Start the Go worker** - joins tailnet, dials Temporal, pings metrics, waits for fires.
+3. **Run the starter** - creates the Schedule with `TriggerImmediately` at `HEALTH_CHECK_INTERVAL=1m`.
+4. **Watch in the Temporal UI** - Schedules tab shows fires; each run's Result is a Claude `HealthReport`.
+5. **Tune the cadence** - re-run the starter with a new interval. Worker keeps running.
+
+</v-clicks>
 
 ---
 layout: exercise
@@ -870,7 +1036,7 @@ heading: Exercise 4
 minutes: 15
 ---
 
-Run the finished metrics watcher. Watch the Schedule fire. Tune the interval. Edit the Claude prompt and see the `HealthReport` change on the next fire.
+Run the finished metrics watcher. Watch the Schedule fire. Tune the interval. Optionally, edit the Claude prompt and see the `HealthReport` change on the next fire.
 
 ---
 layout: toc
@@ -887,24 +1053,30 @@ layout: section
 
 # What We Built
 
-<br>
+<div class="compact-table">
 
 | Layer | Technology | What It Does |
 |-------|-----------|--------------|
-| **Durability** | Temporal | Orchestrates workflows and Schedules, retries failures, survives crashes |
-| **Networking** | Tailscale + tsnet | Zero-config encrypted mesh, reachable from servers and workers alike |
-| **API Security** | Aperture | Shared key management, identity-based rate limiting, model-agnostic |
-| **AI** | OpenAI (Python agent) + Claude (Go watcher) | Same gateway, two vendors, two languages |
+| **Durability** | Temporal | Workflows, Schedules, retries, crash recovery |
+| **Networking** | Tailscale + tsnet | Zero-config encrypted mesh, server + worker side |
+| **API Security** | Aperture | Shared keys, identity-based rate limits, model-agnostic |
+| **AI** | OpenAI (Python) + Claude (Go) | Same gateway, two vendors, two languages |
 
-<br>
+</div>
 
 <v-click>
 
-No VPN setup. No API keys on your machine. No hardcoded addresses.
-
-Just a config file and a tailnet.
+No VPN setup. No API keys on your machine. No hardcoded addresses. Just a config file and a tailnet.
 
 </v-click>
+
+<style>
+.compact-table :deep(td),
+.compact-table :deep(th) {
+  padding: 0.35rem 0.65rem;
+  font-size: 1.25rem;
+}
+</style>
 
 ---
 
@@ -927,7 +1099,7 @@ Wrap your agentic loops in Temporal workflows. Every tool call is an activity. E
 
 # Resources
 
-<br>
+<div class="compact-table">
 
 | Resource | Link |
 |----------|------|
@@ -938,6 +1110,16 @@ Wrap your agentic loops in Temporal workflows. Every tool call is an activity. E
 | Temporal envconfig | [docs.temporal.io/develop/environment-configuration](https://docs.temporal.io/develop/environment-configuration) |
 | Tailscale docs | [tailscale.com/kb](https://tailscale.com/kb) |
 | Aperture docs | [docs.tailscale.com/aperture](https://docs.tailscale.com/aperture) |
+
+</div>
+
+<style>
+.compact-table :deep(td),
+.compact-table :deep(th) {
+  padding: 0.3rem 0.6rem;
+  font-size: 1.2rem;
+}
+</style>
 
 ---
 layout: end

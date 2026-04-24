@@ -21,7 +21,7 @@ tags:
 owner: temporal
 developers:
 - mason.egger@temporal.io
-idle_timeout: 600
+idle_timeout: 3600
 timelimit: 5400
 lab_config:
   extend_ttl: 900
@@ -35,5 +35,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "313679379089057279"
+checksum: "16338872740246915689"
 enhanced_loading: false

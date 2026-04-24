@@ -32,3 +32,15 @@ docs-deploy:
 # Remove generated site output.
 docs-clean:
     rm -rf site/
+
+# --- Slides (Slidev) ---
+
+# Run the slides dev server locally with hot reload.
+slides:
+    cd slides && pnpm dev
+
+# --- Instruqt ---
+
+# Push the local Instruqt track to the remote server.
+push:
+    cd instruqt && instruqt track push

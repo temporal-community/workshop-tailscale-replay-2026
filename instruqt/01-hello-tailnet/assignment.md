@@ -50,7 +50,7 @@ Your first Workflow on the shared Temporal server, accessed through the Tailscal
 
 ## Background
 
-A Temporal dev server is running on a remote VPS, exposed to this Tailscale network via [temporal-ts-net](https://github.com/temporal-community/temporal-ts-net). You can reach it at `temporal-dev:7233` (gRPC) and the **Temporal UI** tab above.
+A Temporal dev server is running on a remote VPS, exposed to this Tailscale network via [temporal-ts-net](https://github.com/temporal-community/temporal-ts-net). **Once you join the tailnet in Step 1**, you'll be able to reach it at `temporal-dev:7233` (gRPC) and via the **Temporal UI** tab. (The UI tab may show a connection error until Step 1 completes; that's expected.)
 
 The Workflow you'll run gets your exercise environment's public IP address, then geolocates it. This exercise is the foundation the rest of the workshop builds on: every later exercise assumes Workers and the Temporal Server can reach each other over the `tailnet` rather than the public internet.
 
@@ -65,15 +65,15 @@ All code for this exercise lives in `exercises/01_hello_tailnet/`. Inside that d
 
 Your Exercise Environment has the Tailscale client and an auth key available as `$TS_AUTHKEY`.
 
-In the **Worker** terminal, bring Tailscale up:
+In the [button label="Worker" background="#444CE7"](tab-1) terminal, bring Tailscale up:
 
-```bash
+```bash,run
 tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
 ```
 
 Once the command has completed, confirm you're connected and can see the shared Temporal server:
 
-```bash
+```bash,run
 tailscale status
 ```
 
@@ -83,28 +83,61 @@ You should see all of the devices that are on the tailnet, including the Tempora
 
 Temporal CLI and SDKs support configuring a Temporal Client using environment variables and TOML configuration files, rather than setting connection options programmatically in your code. This decouples connection settings from application logic, making it easier to manage different environments such as development, staging, and production without code changes.
 
-This has already been set up for you in this environment. To verify, open `temporal.toml` in the **Code Editor** tab. It's already in place in the workshop directory and the SDK is pointed at it via `TEMPORAL_CONFIG_FILE`. You should see two profiles: `default` (localhost) and `tailnet` (pointing at `temporal-dev:7233`).
+This has already been set up for you in this environment. To verify, open `temporal.toml` in the [button label="Code Editor" background="#444CE7"](tab-0) tab. It's already in place in the workshop directory and the SDK is pointed at it via `TEMPORAL_CONFIG_FILE`. You should see two profiles: `default` (localhost) and `tailnet` (pointing at `temporal-dev:7233`).
 
 ## Step 3: Configure Your Application to Connect to the `tailnet` Profile
 
-Now that you've verified the config file is appropriately set up, you can configure your code to use it.
+Both `worker.py` and `starter.py` currently load the `default` profile, which points at localhost. You need to point them at the `tailnet` profile so they connect to the shared Temporal server. This is a one-line change in each file.
 
-Open `exercises/01_hello_tailnet/practice/worker.py` and `starter.py` in the Code Editor. Each file currently loads the default profile, which points at localhost. You need to point it to connect to the Temporal Server running on the `tailnet`.
+### 3a. Edit `exercises/01_hello_tailnet/practice/worker.py`
 
-Find the **TODO** in each file and add the keyword argument `profile="tailnet"` to the `load_client_connect_config`:
+Find the **TODO** in `worker.py` and pass `profile="tailnet"` to `load_client_connect_config`.
+
+**Before:**
 
 ```python
 # TODO: Load the "tailnet" profile
 config = ClientConfig.load_client_connect_config()
 ```
 
-Now the worker and starter will read the `tailnet` profile from `temporal.toml` and connect to the shared Temporal server.
+**After:**
+
+```python
+config = ClientConfig.load_client_connect_config(profile="tailnet")
+```
+
+### 3b. Edit `exercises/01_hello_tailnet/practice/starter.py`
+
+The same change in `starter.py`:
+
+**Before:**
+
+```python
+# TODO: Load the "tailnet" profile
+config = ClientConfig.load_client_connect_config()
+```
+
+**After:**
+
+```python
+config = ClientConfig.load_client_connect_config(profile="tailnet")
+```
+
+Now both the worker and starter read the `tailnet` profile from `temporal.toml` and connect to the shared Temporal server.
 
 ## Step 4: Add your name to the Workflow ID
 
-Next you'll add your name to the Workflow ID. Workflow IDs must be unique on a Temporal Server, and adding your name lets you find your run among everyone else's in the shared Temporal UI. Your name is already provided to the exercise environment as an environment variable via the sign-up form you submitted to start this environment, so all you need to do is reference that variable.
+Workflow IDs must be unique on a Temporal Server, and prefixing yours with your name lets you find your run among everyone else's in the shared Temporal UI. `USER_ID` is already set from the sign-up form as `WORKSHOP_USER_ID` and wired into `starter.py`.
 
-In `starter.py`, find the **TODO** on the `execute_workflow` call and add your `USER_ID` to the Workflow ID so you can find it in the shared Temporal UI:
+In `starter.py`, find the **TODO** on the `execute_workflow` call and prefix the Workflow ID with `{USER_ID}-`.
+
+**Before:**
+
+```python
+id=f"geo-ip-{uuid.uuid4()}",
+```
+
+**After:**
 
 ```python
 id=f"{USER_ID}-geo-ip-{uuid.uuid4()}",
@@ -114,9 +147,9 @@ id=f"{USER_ID}-geo-ip-{uuid.uuid4()}",
 
 Now you are ready to run your Workflow. First, start the Worker. This is the process that will execute your Temporal application.
 
-In the **Worker** terminal:
+In the [button label="Worker" background="#444CE7"](tab-1) terminal:
 
-```bash
+```bash,run
 cd exercises/01_hello_tailnet/practice
 uv run worker.py
 ```
@@ -129,9 +162,9 @@ Once it has connected you will see output similar to: `INFO:root:Starting worker
 
 Once the Worker has started you are ready to run your Workflow.
 
-In the **Starter** terminal:
+In the [button label="Starter" background="#444CE7"](tab-2) terminal:
 
-```bash
+```bash,run
 cd exercises/01_hello_tailnet/practice
 uv run starter.py
 ```
@@ -147,7 +180,7 @@ Your location:   Alderaan, Core Worlds
 
 ## Step 7: Check the Temporal UI
 
-Click the **Temporal UI** tab and find your Workflows by searching for your user ID. You should see your Workflow, along with all other attendees in the workshop!
+Click the [button label="Temporal UI" background="#444CE7"](tab-3) tab and find your Workflows by searching for your user ID. You should see your Workflow, along with all other attendees in the workshop!
 
 > **Note:** The **Temporal UI** tab was loaded before your Exercise Environment joined the `tailnet`, so its first render is stale. Click the refresh button at the top of the tab to reload it. If it still shows a connection error, wait a few seconds and refresh again.
 

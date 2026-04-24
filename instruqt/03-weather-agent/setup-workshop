@@ -17,3 +17,11 @@ git sparse-checkout set --no-cone \
     '/uv.lock' \
     '/temporal.toml' \
     '/exercises/03_weather_agent/**'
+
+# Remove untracked + gitignored leftovers under exercises/ (e.g.
+# __pycache__/ from ex1, any residue from ex2). `git reset --hard`
+# only touches tracked files and sparse-checkout doesn't delete
+# untracked content, so without this the Code Editor tree would
+# still show prior-exercise residue. Scoped to exercises/ so
+# /root/workshop/.venv is untouched.
+git clean -fdx -- exercises/

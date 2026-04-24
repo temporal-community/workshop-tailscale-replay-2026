@@ -20,6 +20,13 @@ git sparse-checkout set --no-cone \
     '/temporal.toml' \
     '/exercises/04_go_agent/**'
 
+# Remove untracked + gitignored leftovers under exercises/ (e.g.
+# __pycache__/ from ex3). `git reset --hard` only touches tracked
+# files and sparse-checkout doesn't delete untracked content, so
+# without this the Code Editor tree would still show prior-exercise
+# residue. Scoped to exercises/ so /root/workshop/.venv is untouched.
+git clean -fdx -- exercises/
+
 # tsnet + Temporal SDK are already compiled in $GOCACHE from ex1's
 # warmup. The Anthropic SDK is ex4-specific; pre-compile here so the
 # attendee's first `go run . worker` doesn't stall on incremental

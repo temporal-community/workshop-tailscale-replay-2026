@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,7 +8,18 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/testsuite"
 )
+
+// newActivityEnv returns a test activity environment with the given
+// Activities registered. Using the env (instead of calling methods
+// directly) wires up the activity.* context helpers, e.g. GetLogger.
+func newActivityEnv(a *Activities) *testsuite.TestActivityEnvironment {
+	ts := &testsuite.WorkflowTestSuite{}
+	env := ts.NewTestActivityEnvironment()
+	env.RegisterActivity(a)
+	return env
+}
 
 func TestFetchMetrics(t *testing.T) {
 	const fakeMetrics = "# HELP node_cpu_seconds_total\nnode_cpu_seconds_total{cpu=\"0\",mode=\"idle\"} 12345.0\n"
@@ -20,8 +30,10 @@ func TestFetchMetrics(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	a := &Activities{HTTP: srv.Client(), MetricsURL: srv.URL}
-	got, err := a.FetchMetrics(context.Background())
+	val, err := newActivityEnv(a).ExecuteActivity(a.FetchMetrics)
 	require.NoError(t, err)
+	var got string
+	require.NoError(t, val.Get(&got))
 	require.Equal(t, fakeMetrics, got)
 }
 
@@ -66,8 +78,10 @@ func TestAnalyzeMetrics(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	a := NewActivities(srv.Client(), "", srv.URL, "claude-haiku-4-5")
-	got, err := a.AnalyzeMetrics(context.Background(), "some metrics")
+	val, err := newActivityEnv(a).ExecuteActivity(a.AnalyzeMetrics, "some metrics")
 	require.NoError(t, err)
+	var got HealthReport
+	require.NoError(t, val.Get(&got))
 	require.Equal(t, want, got)
 }
 
@@ -97,8 +111,10 @@ func TestAnalyzeMetrics_StripsCodeFences(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	a := NewActivities(srv.Client(), "", srv.URL, "claude-haiku-4-5")
-	got, err := a.AnalyzeMetrics(context.Background(), "some metrics")
+	val, err := newActivityEnv(a).ExecuteActivity(a.AnalyzeMetrics, "some metrics")
 	require.NoError(t, err)
+	var got HealthReport
+	require.NoError(t, val.Get(&got))
 	require.Equal(t, want, got)
 }
 
@@ -117,6 +133,6 @@ func TestAnalyzeMetrics_AIError(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	a := NewActivities(srv.Client(), "", srv.URL, "claude-haiku-4-5")
-	_, err := a.AnalyzeMetrics(context.Background(), "some metrics")
+	_, err := newActivityEnv(a).ExecuteActivity(a.AnalyzeMetrics, "some metrics")
 	require.Error(t, err)
 }

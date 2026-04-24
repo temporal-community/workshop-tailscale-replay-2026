@@ -14,6 +14,11 @@ notes:
     that joins the `tailnet` as its own node via `tsnet`, instead of
     riding on the Exercise Environment's Tailscale client.
 tabs:
+- id: fi2edgfrbxys
+  title: Code Editor
+  type: code
+  hostname: workshop
+  path: /root/workshop/exercises/02_explore_tailscale
 - id: 3rfluijsiy9t
   title: Worker
   type: terminal
@@ -24,11 +29,6 @@ tabs:
   type: terminal
   hostname: workshop
   workdir: /root/workshop
-- id: fi2edgfrbxys
-  title: Code Editor
-  type: code
-  hostname: workshop
-  path: /root/workshop/exercises/02_explore_tailscale
 - id: le7rxdsm3qqx
   title: Temporal UI
   type: service
@@ -58,15 +58,13 @@ Go and the `tsnet` library are already installed, and the module cache has been 
 
 > **Verify you're on the `tailnet`**
 >
-> Run the following command:
-> ```bash
+> In the [button label="Worker" background="#444CE7"](tab-1) terminal:
+> ```bash,run
 > tailscale status
 > ```
 >
-> If you see **Logged Out** then you need to reauthenticate to the `tailnet`
->
-> Run the following command to authenticate to the `tailnet`
-> ```bash
+> If you see **Logged Out**, reauthenticate:
+> ```bash,run
 > tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
 > ```
 
@@ -74,15 +72,15 @@ Go and the `tsnet` library are already installed, and the module cache has been 
 
 Before you add another Worker, it's worth looking at who else is already on the `tailnet`. `tailscale status` lists every node your machine can see, along with its IP, hostname, and connection path.
 
-In the **Worker** terminal:
+In the [button label="Worker" background="#444CE7"](tab-1) terminal:
 
-```bash
+```bash,run
 tailscale status
 ```
 
 You should see:
 
-- **Your Exercise Environment** (`workshop-<something>`) with a `100.x.y.z` `tailnet` IP
+- **Your Exercise Environment** (`<your-user-id>-env`) with a `100.x.y.z` `tailnet` IP
 - **`temporal-dev`**, the VPS running the shared Temporal dev server
 - **Other attendee machines**, everyone else in the workshop, each with their own hostname
 
@@ -90,9 +88,9 @@ You should see:
 
 `tailscale status` tells you what's on the `tailnet`. `tailscale ping` tells you *how* you reach any given node, whether the first packets go through a Tailscale relay (DERP) or straight over a direct encrypted WireGuard path.
 
-Still in the **Worker** terminal:
+Still in the [button label="Worker" background="#444CE7"](tab-1) terminal:
 
-```bash
+```bash,run
 tailscale ping temporal-dev
 ```
 
@@ -108,9 +106,9 @@ The first line may say `pong from temporal-dev (100.109.42.22) via DERP(...)`, m
 
 Every node on the `tailnet` has an identity: a machine name, tags, and the user that owns the node. Services on the `tailnet` use this identity to authorize or rate-limit you without any API keys on your side. In Exercise 3 you'll see Aperture use exactly this mechanism to attach your name to every LLM call.
 
-Still in the **Worker** terminal:
+Still in the [button label="Worker" background="#444CE7"](tab-1) terminal:
 
-```bash
+```bash,run
 tailscale whois $(tailscale ip -4)
 ```
 
@@ -120,15 +118,15 @@ You should see the machine name, tags, and the Tailscale user associated with th
 
 Steps 1 through 3 leaned on the system `tailscale` binary to explore the `tailnet`. The Go Worker you're about to build joins the `tailnet` on its own via `tsnet`, so it doesn't need the binary at all. Prove that by taking it down now, before the Worker ever runs.
 
-In the **Worker** terminal:
+In the [button label="Worker" background="#444CE7"](tab-1) terminal:
 
-```bash
+```bash,run
 tailscale down
 ```
 
 Verify the client is stopped:
 
-```bash
+```bash,run
 tailscale status
 ```
 
@@ -138,7 +136,7 @@ You should see `Stopped` (or `Logged out`) instead of the `tailnet` nodes from S
 
 The `tsnet.Server` struct is how a Go program declares that it wants to be a `tailnet` node. You give it a hostname, a state directory, and an auth key, and once you call `Start()` your process has its own `tailnet` IP.
 
-Open `go-hello-tsnet/practice/main.go` in the **Code Editor** tab. Inside `startTsnet`, find the **TODO** in the `tsnet.Server` literal and set each field using the values already in scope:
+Open `go-hello-tsnet/practice/main.go` in the [button label="Code Editor" background="#444CE7"](tab-0) tab. Inside `startTsnet`, find the **TODO** in the `tsnet.Server` literal and set each field using the values already in scope:
 
 - Set **`Hostname`** to `nodeName`. This is the name your node will have in `tailscale status`. The `resolveNodeName` helper just above the TODO has already computed it as `<userID>-ex2-go-<mode>-<5 random chars>`.
 - Set **`Dir`** to `filepath.Join(configDir, "workshop-tsnet", nodeName)`. This is where `tsnet` persists its node and machine keys so later runs reuse the identity.
@@ -174,28 +172,28 @@ Every byte the SDK sends now flows through `tsNode.Dial`, which routes over the 
 
 With both TODOs filled in, the Worker is ready to join the `tailnet` and connect to Temporal on its own.
 
-In the **Worker** terminal:
+In the [button label="Worker" background="#444CE7"](tab-1) terminal:
 
-```bash
+```bash,run
 cd exercises/02_explore_tailscale/go-hello-tsnet/practice
 go run . worker
 ```
 
-The first run takes 10 to 30 seconds while `tsnet` registers the node. You should see output similar to:
+The first run takes 10 to 30 seconds while `tsnet` registers the node. You should see output similar to this (with your own user ID and a random 5-char suffix):
 
 ```output
-joined tailnet as <your-user-id>-ex2-go-worker-<5 random chars>
+joined tailnet as YOUR-USER-ID-ex2-go-worker-XXXXX
 connected to temporal at temporal-dev:7233 via tsnet
-Starting Go worker on task queue: <your-user-id>-hello-tsnet
+Starting Go worker on task queue: YOUR-USER-ID-hello-tsnet
 ```
 
 ## Step 8: Confirm the Go Worker is on the `tailnet`
 
 The Go Worker should now appear as its own node on the `tailnet`, even with the system Tailscale client still offline from Step 4. To verify from the command line, bring the system client back up and check `tailscale status`.
 
-In the **Starter** terminal:
+In the [button label="Starter" background="#444CE7"](tab-2) terminal:
 
-```bash
+```bash,run
 tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
 tailscale status | grep -- '-ex2-go-worker'
 ```
@@ -206,9 +204,9 @@ You should see a new row, `<your-user-id>-ex2-go-worker-<suffix>`, separate from
 
 Now trigger the same geo-IP Workflow from Exercise 1. This time the activities execute on the Go `tsnet` Worker you just started.
 
-Still in the **Starter** terminal:
+Still in the [button label="Starter" background="#444CE7"](tab-2) terminal:
 
-```bash
+```bash,run
 cd exercises/02_explore_tailscale/go-hello-tsnet/practice
 go run . starter
 ```
@@ -217,7 +215,7 @@ You should see your public IP address and location printed, same as Exercise 1, 
 
 ## Step 10: Check the Temporal UI
 
-Click the **Temporal UI** tab and find your `<your-user-id>-hello-tsnet` Workflow. Click into it and look at the worker info on each activity. The task queue is `<your-user-id>-hello-tsnet`, and the worker identity reflects the Go process rather than the Python one from Exercise 1.
+Click the [button label="Temporal UI" background="#444CE7"](tab-3) tab and find your `<your-user-id>-hello-tsnet` Workflow. Click into it and look at the worker info on each activity. The task queue is `<your-user-id>-hello-tsnet`, and the worker identity reflects the Go process rather than the Python one from Exercise 1.
 
 > **Note:** If the **Temporal UI** tab shows a connection error or stale content, click the refresh button at the top of the tab. The iframe can hold an old render from before the `tailnet` was ready.
 

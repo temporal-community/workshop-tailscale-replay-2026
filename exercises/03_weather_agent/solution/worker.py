@@ -66,6 +66,11 @@ def main() -> None:
     logging.getLogger("openai").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     warnings.filterwarnings("ignore", category=UserWarning, module="temporalio.converter")
+    warnings.filterwarnings(
+        "ignore",
+        category=UserWarning,
+        message=r".*was imported after initial workflow load.*",
+    )
 
     parser = argparse.ArgumentParser(description="Run Weather Agent Worker")
     parser.add_argument("--agent", action="store_true", help="Run the agentic loop worker")

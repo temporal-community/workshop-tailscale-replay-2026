@@ -1,0 +1,41 @@
+// Default Mermaid config for the Tailscale Slidev theme.
+// Light base with Tailscale palette overrides: coral accents, charcoal text,
+// cream node backgrounds on warm paper.
+// (Plain default export. Slidev calls it to get the config.)
+
+export default () => ({
+  theme: 'base',
+  themeVariables: {
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: '18px',
+    background: '#EDEBEA',
+    titleColor: '#1F1E1E',
+    primaryColor: '#FFFFFF',
+    primaryTextColor: '#1F1E1E',
+    primaryBorderColor: '#E46C63',
+    nodeTextColor: '#1F1E1E',
+    secondaryColor: '#F5F2F1',
+    secondaryTextColor: '#1F1E1E',
+    secondaryBorderColor: '#434343',
+    tertiaryColor: '#EDEBEA',
+    tertiaryTextColor: '#706E6D',
+    tertiaryBorderColor: '#AFACAB',
+    lineColor: '#434343',
+    textColor: '#1F1E1E',
+    mainBkg: '#FFFFFF',
+    nodeBorder: '#E46C63',
+    clusterBkg: 'rgba(228, 108, 99, 0.08)',
+    clusterBorder: '#E46C63',
+    edgeLabelBackground: '#EDEBEA',
+    labelBackground: '#EDEBEA',
+    actorBkg: '#FFFFFF',
+    actorBorder: '#E46C63',
+    actorTextColor: '#1F1E1E',
+    actorLineColor: '#434343',
+    signalColor: '#434343',
+    signalTextColor: '#1F1E1E',
+    noteBkgColor: 'rgba(228, 108, 99, 0.10)',
+    noteTextColor: '#1F1E1E',
+    noteBorderColor: '#E46C63',
+  },
+})

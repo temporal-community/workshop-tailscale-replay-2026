@@ -189,6 +189,22 @@ body,
   background: linear-gradient(to bottom, transparent 0%, var(--temporal-bg) 40%);
 }
 
+/* Imported figures (pptx-sourced diagrams). The pptx diagrams have light
+   cream backgrounds, so on the dark Temporal canvas we drop them into a
+   subtle card-ish container that keeps them legible without clashing. */
+.slidev-layout img.tailscale-figure {
+  display: block;
+  max-width: 100%;
+  max-height: 62vh;
+  width: auto;
+  height: auto;
+  margin: 0.5rem auto 0;
+  border-radius: 0.4rem;
+  background: rgba(199, 215, 254, 0.04);
+  padding: 0.4rem;
+  border: 1px solid var(--temporal-border);
+}
+
 /* Mermaid diagrams: constrain the rendered SVG to the available slide area.
    Without this, large flowcharts render at their natural height and spill past the footer. */
 .slidev-layout .slidev-mermaid,

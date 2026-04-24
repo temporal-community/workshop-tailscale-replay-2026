@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      slidev-theme-tailscale:
+        specifier: link:./theme-tailscale
+        version: link:theme-tailscale
       slidev-theme-temporal:
         specifier: link:./theme-temporal
         version: link:theme-temporal

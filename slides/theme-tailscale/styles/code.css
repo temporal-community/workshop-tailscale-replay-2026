@@ -1,0 +1,38 @@
+/* Code panel styling for the Tailscale theme.
+   Pairs with the tailscale-light Shiki token theme in setup/shiki.ts. */
+
+.slidev-layout .slidev-code,
+.slidev-layout pre.shiki,
+.slidev-layout pre code {
+  font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 400;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.slidev-layout pre.shiki,
+.slidev-layout div[class*="language-"] > pre {
+  background: var(--tailscale-bg-elev) !important;
+  border: 1px solid var(--tailscale-border);
+  border-radius: 0.4rem;
+  padding: 0.7rem 1.25rem;
+  margin: 0.4rem 0;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02) inset,
+              0 8px 30px -18px rgba(31, 30, 30, 0.18);
+}
+/* Give the last character of a long line breathing room so italic glyphs
+   and descenders don't get clipped by the rounded corner or scrollbar. */
+.slidev-layout pre.shiki code,
+.slidev-layout div[class*="language-"] > pre code {
+  padding-right: 0.5rem;
+}
+
+.slidev-layout :not(pre) > code {
+  background: rgba(228, 108, 99, 0.12);
+  color: #B63F36;
+  padding: 0.08em 0.4em;
+  border-radius: 0.3rem;
+  font-size: 1.35rem;
+  border: 1px solid rgba(228, 108, 99, 0.28);
+}

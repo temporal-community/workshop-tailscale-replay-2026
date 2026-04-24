@@ -64,9 +64,9 @@ func startTsnet(userID, mode string) *tsnet.Server {
 
 	tsNode := &tsnet.Server{
 		// TODO 1: Configure the tsnet.Server so this process joins the tailnet.
-		//   Hostname: nodeName
-		//   Dir:      filepath.Join(configDir, "workshop-tsnet", nodeName)
-		//   AuthKey:  os.Getenv("TS_AUTHKEY")
+		//   Hostname: nodeName,
+		//   Dir:      filepath.Join(configDir, "workshop-tsnet", nodeName),
+		//   AuthKey:  os.Getenv("TS_AUTHKEY"),
 		Hostname:
 		Dir:
 		AuthKey:
