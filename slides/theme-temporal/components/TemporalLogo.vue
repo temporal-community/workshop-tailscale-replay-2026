@@ -1,6 +1,7 @@
 <!--
   Temporal "plus" mark. Inline SVG, inherits color via currentColor
-  so layouts can tint it with CSS (default: Temporal mint green).
+  so layouts can tint it with CSS. Brand rule: the mark must be
+  either black or white, never green. Pick based on background.
 -->
 <template>
   <svg

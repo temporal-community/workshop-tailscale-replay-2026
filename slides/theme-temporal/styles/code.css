@@ -16,10 +16,16 @@
   background: var(--temporal-bg-elev) !important;
   border: 1px solid var(--temporal-border);
   border-radius: 0.4rem;
-  padding: 0.7rem 0.9rem;
+  padding: 0.7rem 1.25rem;
   margin: 0.4rem 0;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset,
               0 12px 40px -20px rgba(0, 0, 0, 0.8);
+}
+/* Give the last character of a long line breathing room so italic glyphs
+   and descenders don't get clipped by the rounded corner or scrollbar. */
+.slidev-layout pre.shiki code,
+.slidev-layout div[class*="language-"] > pre code {
+  padding-right: 0.5rem;
 }
 
 .slidev-layout :not(pre) > code {

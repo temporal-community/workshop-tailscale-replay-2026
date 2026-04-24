@@ -39,7 +39,8 @@ import TemporalLogo from '../components/TemporalLogo.vue'
 .end-logo {
   width: 38px;
   height: 38px;
-  color: var(--temporal-green);
+  /* Temporal brand rule: the mark is black or white, never green. */
+  color: #ffffff;
 }
 .end-content {
   align-self: flex-start;
