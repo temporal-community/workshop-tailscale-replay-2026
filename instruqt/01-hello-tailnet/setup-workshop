@@ -60,6 +60,13 @@ net.ipv4.conf.default.rp_filter = 2
 EOF
 sysctl --system
 
+# rp_filter=2 alone is not sufficient on GCP. Tailscale's DERP and
+# control plane connections don't have SO_MARK set, so they hit table
+# 52's default route (via tailscale0) before the exit node tunnel
+# exists, deadlocking the bootstrap. This source-based rule ensures
+# all traffic from this VM's IP uses the main table directly.
+ip rule add from "$(ip route get 8.8.8.8 | grep -oP 'src \K\S+')/32" lookup main priority 100
+
 # --- Local reverse proxy for Instruqt service tabs ---
 # Instruqt `service` tabs proxy VM ports, not tailnet URLs, and render
 # the proxied site inside an iframe. Caddy listens on :8233 and :80,
