@@ -188,6 +188,32 @@ Click the [button label="Temporal UI" background="#444CE7"](tab-3) tab and find 
 
 Your Worker is running in your exercise environment hosted in a GCP region. The Temporal Server is running on a VPS in DigitalOcean's San Francisco region. Tailscale provided secure access for the Worker to communicate with the server without exposing the server to the public internet.
 
+## Step 8: Route egress through an exit node
+
+Tailscale also allows for setting an exit node on your `tailnet`, acting as a full tunnel VPN.
+
+The `tailnet` has a shared exit node called `nyc3-exit-node`. Route your public internet traffic through it and re-run the Workflow to see your IP and location change.
+
+In the [button label="Starter" background="#444CE7"](tab-2) terminal, set your environment to use `nyc3-exit-node` as the exit node:
+
+```bash,run
+tailscale set --exit-node=nyc3-exit-node
+```
+
+Then re-run the Workflow:
+
+```bash,run
+uv run starter.py
+```
+
+Your IP address and location should now come from New York. The Workflow still reaches `temporal-dev` directly over the `tailnet`, because exit nodes only affect egress to the public internet, not `tailnet`-internal traffic.
+
+Unset your exit node before moving on:
+
+```bash,run
+tailscale set --exit-node=
+```
+
 ## Wrapping Up
 
 In this exercise you:
@@ -195,6 +221,7 @@ In this exercise you:
 - Joined a `tailnet` and connected to a Temporal Server that is not reachable from the public internet
 - Configured a Temporal Client with a TOML profile instead of hard-coding connection settings
 - Ran a Workflow from an environment in one cloud region against a Temporal Server in another, with Tailscale as the only network path between them
+- Routed your public-internet egress through a shared `tailnet` exit node and saw your geo-IP change while the Workflow's connection to `temporal-dev` was unaffected
 
 The pattern you just set up, a Worker on one side of a `tailnet` talking to a Temporal Server on the other, is the foundation every remaining exercise builds on. In the next exercise you'll take the network one layer deeper by embedding Tailscale directly inside a Go Worker with `tsnet`, so the Worker becomes its own node on the `tailnet` rather than piggybacking on the host's Tailscale client.
 

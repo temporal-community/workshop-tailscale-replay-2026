@@ -464,6 +464,7 @@ Prove the tailnet works. Run a workflow on the shared Temporal server.
 4. **Start a worker** -> it connects to `temporal-dev:7233`
 5. **Run the workflow** -> get your IP and geolocation
 6. **Open the Temporal UI** -> find your workflow among everyone else's
+7. **Route egress through an exit node** -> watch your geo-IP change
 
 ---
 
