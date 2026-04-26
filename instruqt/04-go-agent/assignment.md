@@ -67,7 +67,7 @@ The same `tsnet` pattern from Exercise 2, but against real services. The Worker 
 
 ## Environment
 
-All code for this exercise lives in `exercises/04_go_agent/practice/`. Unlike the earlier exercises, this one has no **TODO**s, the code is already complete. You'll read, run, and optionally tweak it in place. Step 5 invites you to customize the Claude prompt in `activities.go` if you want to experiment.
+All code for this exercise lives in `exercises/04_go_agent/practice/`. Unlike the earlier exercises, this one has no **TODO**s, the code is already complete. You'll read, run, and optionally tweak it in place. Step 7 invites you to customize the Claude prompt in `activities.go` if you want to experiment.
 
 ## Topology
 
@@ -170,7 +170,11 @@ You should see at least one completed Workflow run whose result is a structured 
 
 > **Note:** The Schedule is capped at 5 runs to keep the shared Temporal server clean. Once all 5 fire, the Schedule pauses itself. Schedules live on the Temporal Server, not on the Worker, so restarting the Worker does nothing to the Schedule. To reset the count, re-run the starter, which deletes and recreates the Schedule.
 
-## Step 5: Tune the cadence
+## Step 5: Explore the Aperture UI
+
+Open the [button label="Aperture UI" background="#444CE7"](tab-4) tab and explore it the same way you did in Exercise 3. You should see the Claude calls from the `AnalyzeMetrics` activities that just ran.
+
+## Step 6: Tune the cadence
 
 To change the interval, re-run the starter with a different `HEALTH_CHECK_INTERVAL`. The Worker keeps running; only the Schedule changes.
 
@@ -183,13 +187,13 @@ go run . starter
 
 Any Go duration works (`30s`, `2m`, `5m`). The starter deletes the old Schedule and creates a new one with the new interval, so the 5-run count resets too. The Worker in the other terminal notices the new fires immediately.
 
-## Step 6: Customize the Claude prompt (optional)
+## Step 7: Customize the Claude prompt (optional)
 
 If you want to see how the summary changes when you change what you ask Claude, you can edit the prompt directly and restart the Worker.
 
 Open `activities.go` in the [button label="Code Editor" background="#444CE7"](tab-0) tab, find `AnalyzeMetrics`. The prompt lives in a raw string. Change it however you like, ask Claude to flag anything unusual, add a field to the `HealthReport` struct, or try a different tone. Then restart the Worker (the starter doesn't need restarting; the Schedule is unchanged) and watch the next Schedule fire produce a different `HealthReport` in the UI.
 
-## Step 7: Run the offline tests
+## Step 8: Run the offline tests (optional)
 
 The Workflow and activities also come with offline tests that mock `node_exporter` and Aperture with `httptest.Server`, so they don't need the `tailnet` at all.
 
@@ -209,6 +213,7 @@ In this exercise you:
 - Used the same Aperture pattern from Exercise 3, this time with Anthropic's Claude instead of OpenAI
 - Ran a separate starter process that registered a Temporal Schedule with `TriggerImmediately`, matching the production pattern of decoupling Workers from Schedule management
 - Watched the Schedule fire on creation and on a cadence in the Temporal UI, with the Worker picking up each fired run
+- Explored the Aperture UI to see per-request logs and cost attribution for the Claude calls the Worker made
 - Tuned the cadence by re-running the starter with a different `HEALTH_CHECK_INTERVAL`, without restarting the Worker
 - Optionally customized the Claude prompt and saw the structured `HealthReport` change on the next fire
 - Ran the offline tests that mock `node_exporter` and Aperture, no `tailnet` required

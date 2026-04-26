@@ -184,6 +184,20 @@ Watch the Worker logs. The LLM chains through multiple tools before responding: 
 
 The LLM made autonomous decisions about which tool to call next, and Temporal recorded every call, input, and output in the Workflow history. If the process had crashed halfway through, Temporal could replay the history on a new Worker and the agent would resume from exactly where it left off, even partway through a multi-tool reasoning chain.
 
+## Step 8: Explore the Aperture UI
+
+Open the [button label="Aperture UI" background="#444CE7"](tab-4) tab to see every LLM call your Workers made.
+
+**Dashboard** gives you the aggregate view: total requests, total tokens, estimated cost, quota remaining, and a per-model breakdown in the **Metrics by Model** table. The **Recent Requests** list at the bottom shows individual calls with per-request token counts and costs.
+
+Click the **Logs** tab to browse individual requests. Click any row to expand it and read the full request payload and response body for that call.
+
+Click the **Tool Calls** tab to see every tool invocation that came out of the agentic loop, listed separately from the LLM calls that spawned them.
+
+Click the **Adoption** tab for a cost and token-usage breakdown across models and over time.
+
+> **Note:** Every Instruqt machine authenticated using the same `tag:infra`, so the Dashboard and Logs show requests from all attendees, not just yours. In a real deployment, Aperture attributes usage per user via their Tailscale identity from your IDP. Agentic workloads should have their own tags too — both so Aperture tracks them separately from human users and because zero-trust ACLs depend on a well-defined tag taxonomy to enforce least-privilege access. The workshop `tailnet` has fully open ACLs for simplicity; in production you would give each user and each agent only the access they need.
+
 ## Wrapping Up
 
 In this exercise you:
@@ -193,5 +207,6 @@ In this exercise you:
 - Turned that Workflow into an agentic loop where the LLM keeps calling tools until it has enough information to answer
 - Used Temporal's dynamic activities to dispatch whichever tool the LLM chose on each iteration
 - Watched Temporal record every LLM call and tool result as part of the Workflow history
+- Explored the Aperture UI to see per-request logs, tool calls, and cost attribution for every LLM call the agent made
 
 In the final exercise you'll combine the `tsnet` pattern from Exercise 2 with the Aperture pattern you just used, in a single Go service. A metrics watcher that scrapes a `tailnet`-only endpoint, asks Claude for a health summary, and runs on a Temporal Schedule.
