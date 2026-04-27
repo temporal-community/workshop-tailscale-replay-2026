@@ -44,24 +44,22 @@ timelimit: 900
 enhanced_loading: null
 ---
 
-# Exercise 1: Hello `tailnet`
-
 Your first Workflow on the shared Temporal server, accessed through the Tailscale network.
 
-## Background
+# Background
 
 A Temporal dev server is running on a remote VPS, exposed to this Tailscale network via [temporal-ts-net](https://github.com/temporal-community/temporal-ts-net). **Once you join the tailnet in Step 1**, you'll be able to reach it at `temporal-dev:7233` (gRPC) and via the **Temporal UI** tab. (The UI tab may show a connection error until Step 1 completes; that's expected.)
 
 The Workflow you'll run gets your exercise environment's public IP address, then geolocates it. This exercise is the foundation the rest of the workshop builds on: every later exercise assumes Workers and the Temporal Server can reach each other over the `tailnet` rather than the public internet.
 
-## Environment
+# Environment
 
 All code for this exercise lives in `exercises/01_hello_tailnet/`. Inside that directory:
 
 - **`practice/`** is where you do your work. Each file has one or more **TODO** comments pointing at the change you need to make.
 - **`solution/`** contains the finished version of every file. If you get stuck or want to double-check your work, compare against the matching file in `solution/`. Don't run from `solution/`, run from `practice/`.
 
-## Step 1: Join the `tailnet`
+# Step 1: Join the `tailnet`
 
 Your Exercise Environment has the Tailscale client and an auth key available as `$TS_AUTHKEY`.
 
@@ -79,17 +77,17 @@ tailscale status
 
 You should see all of the devices that are on the tailnet, including the Temporal Server `temporal-dev` in the list.
 
-## Step 2: Verify the Temporal Config File
+# Step 2: Verify the Temporal Config File
 
 Temporal CLI and SDKs support configuring a Temporal Client using environment variables and TOML configuration files, rather than setting connection options programmatically in your code. This decouples connection settings from application logic, making it easier to manage different environments such as development, staging, and production without code changes.
 
 This has already been set up for you in this environment. To verify, open `temporal.toml` in the [button label="Code Editor" background="#444CE7"](tab-0) tab. It's already in place in the workshop directory and the SDK is pointed at it via `TEMPORAL_CONFIG_FILE`. You should see two profiles: `default` (localhost) and `tailnet` (pointing at `temporal-dev:7233`).
 
-## Step 3: Configure Your Application to Connect to the `tailnet` Profile
+# Step 3: Configure Your Application to Connect to the `tailnet` Profile
 
 Both `worker.py` and `starter.py` currently load the `default` profile, which points at localhost. You need to point them at the `tailnet` profile so they connect to the shared Temporal server. This is a one-line change in each file.
 
-### 3a. Edit `exercises/01_hello_tailnet/practice/worker.py`
+## 3a. Edit `exercises/01_hello_tailnet/practice/worker.py`
 
 Find the **TODO** in `worker.py` and pass `profile="tailnet"` to `load_client_connect_config`.
 
@@ -106,7 +104,7 @@ config = ClientConfig.load_client_connect_config()
 config = ClientConfig.load_client_connect_config(profile="tailnet")
 ```
 
-### 3b. Edit `exercises/01_hello_tailnet/practice/starter.py`
+## 3b. Edit `exercises/01_hello_tailnet/practice/starter.py`
 
 The same change in `starter.py`:
 
@@ -125,7 +123,7 @@ config = ClientConfig.load_client_connect_config(profile="tailnet")
 
 Now both the worker and starter read the `tailnet` profile from `temporal.toml` and connect to the shared Temporal server.
 
-## Step 4: Add your name to the Workflow ID
+# Step 4: Add your name to the Workflow ID
 
 Workflow IDs must be unique on a Temporal Server, and prefixing yours with your name lets you find your run among everyone else's in the shared Temporal UI. `USER_ID` is already set from the sign-up form as `WORKSHOP_USER_ID` and wired into `starter.py`.
 
@@ -143,7 +141,7 @@ id=f"geo-ip-{uuid.uuid4()}",
 id=f"{USER_ID}-geo-ip-{uuid.uuid4()}",
 ```
 
-## Step 5: Start the Worker
+# Step 5: Start the Worker
 
 Now you are ready to run your Workflow. First, start the Worker. This is the process that will execute your Temporal application.
 
@@ -158,7 +156,7 @@ You should see: `INFO:root:Connecting to Temporal at temporal-dev:7233`
 
 Once it has connected you will see output similar to: `INFO:root:Starting worker on task queue: your-name-hello-tailnet`
 
-## Step 6: Run the Workflow
+# Step 6: Run the Workflow
 
 Once the Worker has started you are ready to run your Workflow.
 
@@ -173,12 +171,12 @@ You should see the public IP address and location of the server where your exerc
 
 Sample output:
 
-```output
+```bash,nocopy
 Your IP address: 257.257.257.257
 Your location:   Alderaan, Core Worlds
 ```
 
-## Step 7: Check the Temporal UI
+# Step 7: Check the Temporal UI
 
 Click the [button label="Temporal UI" background="#444CE7"](tab-3) tab and find your Workflows by searching for your user ID. You should see your Workflow, along with all other attendees in the workshop!
 
@@ -188,7 +186,7 @@ Click the [button label="Temporal UI" background="#444CE7"](tab-3) tab and find 
 
 Your Worker is running in your exercise environment hosted in a GCP region. The Temporal Server is running on a VPS in DigitalOcean's San Francisco region. Tailscale provided secure access for the Worker to communicate with the server without exposing the server to the public internet.
 
-## Step 8: Route egress through an exit node
+# Step 8: Route egress through an exit node
 
 Tailscale also allows for setting an exit node on your `tailnet`, acting as a full tunnel VPN.
 
@@ -214,7 +212,7 @@ Unset your exit node before moving on:
 tailscale set --exit-node=
 ```
 
-## Wrapping Up
+# Wrapping Up
 
 In this exercise you:
 
@@ -224,4 +222,3 @@ In this exercise you:
 - Routed your public-internet egress through a shared `tailnet` exit node and saw your geo-IP change while the Workflow's connection to `temporal-dev` was unaffected
 
 The pattern you just set up, a Worker on one side of a `tailnet` talking to a Temporal Server on the other, is the foundation every remaining exercise builds on. In the next exercise you'll take the network one layer deeper by embedding Tailscale directly inside a Go Worker with `tsnet`, so the Worker becomes its own node on the `tailnet` rather than piggybacking on the host's Tailscale client.
-
