@@ -39,13 +39,15 @@ timelimit: 1200
 enhanced_loading: null
 ---
 
+# Exercise 2: Exploring Your Tailscale Network
+
 Now that you've run a Workflow through the `tailnet`, let's look at the network itself. You'll discover what's on the `tailnet`, see how Tailscale identity works, and run a Go Worker that joins the `tailnet` as its own node via [`tsnet`](https://pkg.go.dev/tailscale.com/tsnet) instead of riding on the Exercise Environment's system client.
 
-# Background
+## Background
 
 In Exercise 1 your Python Worker reached Temporal through the Exercise Environment's Tailscale client. The environment was on the `tailnet`, and the Worker inherited that connectivity. `tsnet` is the library inside Tailscale that lets a process join the `tailnet` directly, as its own node, with no system-wide install. Every Tailscale binary uses it under the hood, and you can embed it in any Go program. That's what `temporal-ts-net` does to put the Temporal dev server on the `tailnet`, and it's the pattern you'll use in Exercise 4 for the metrics watcher.
 
-# Environment
+## Environment
 
 Steps 1 through 3 poke at the `tailnet` from the **Worker** terminal and don't touch code. Step 4 takes the system Tailscale client offline so the later `tsnet` work has to stand on its own. Starting in Step 5, the Go code for this exercise lives under `go-hello-tsnet/` in the **Code Editor** tab. Inside that directory:
 
@@ -66,7 +68,7 @@ Go and the `tsnet` library are already installed, and the module cache has been 
 > tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
 > ```
 
-# Step 1: See what's on the `tailnet`
+## Step 1: See what's on the `tailnet`
 
 Before you add another Worker, it's worth looking at who else is already on the `tailnet`. `tailscale status` lists every node your machine can see, along with its IP, hostname, and connection path.
 
@@ -82,7 +84,7 @@ You should see:
 - **`temporal-dev`**, the VPS running the shared Temporal dev server
 - **Other attendee machines**, everyone else in the workshop, each with their own hostname
 
-# Step 2: Ping the Temporal Server
+## Step 2: Ping the Temporal Server
 
 `tailscale status` tells you what's on the `tailnet`. `tailscale ping` tells you *how* you reach any given node, whether the first packets go through a Tailscale relay (DERP) or straight over a direct encrypted WireGuard path.
 
@@ -100,7 +102,7 @@ pong from temporal-dev (100.109.42.22) via 167.71.156.227:35753 in 40ms
 
 The first line may say `pong from temporal-dev (100.109.42.22) via DERP(...)`, meaning it was relayed through Tailscale's infrastructure. Subsequent lines (like the sample above) report `via <public-IP>:<port>`, a direct encrypted WireGuard path with no relay. Once the direct path is established, every packet to `temporal-dev` flows over it.
 
-# Step 3: Check your Tailscale identity
+## Step 3: Check your Tailscale identity
 
 Every node on the `tailnet` has an identity: a machine name, tags, and the user that owns the node. Services on the `tailnet` use this identity to authorize or rate-limit you without any API keys on your side. In Exercise 3 you'll see Aperture use exactly this mechanism to attach your name to every LLM call.
 
@@ -112,7 +114,7 @@ tailscale whois $(tailscale ip -4)
 
 You should see the machine name, tags, and the Tailscale user associated with this node.
 
-# Step 4: Take the system Tailscale client offline
+## Step 4: Take the system Tailscale client offline
 
 Steps 1 through 3 leaned on the system `tailscale` binary to explore the `tailnet`. The Go Worker you're about to build joins the `tailnet` on its own via `tsnet`, so it doesn't need the binary at all. Prove that by taking it down now, before the Worker ever runs.
 
@@ -130,7 +132,7 @@ tailscale status
 
 You should see `Stopped` (or `Logged out`) instead of the `tailnet` nodes from Step 1. Your Exercise Environment is no longer on the `tailnet`. The Go Worker is about to put itself there on its own.
 
-# Step 5: Configure the `tsnet.Server`
+## Step 5: Configure the `tsnet.Server`
 
 The `tsnet.Server` struct is how a Go program declares that it wants to be a `tailnet` node. You give it a hostname, a state directory, and an auth key, and once you call `Start()` your process has its own `tailnet` IP.
 
@@ -152,7 +154,7 @@ tsNode := &tsnet.Server{
 
 The rest of the function (`tsNode.Start()`, `tsNode.Up(upCtx)`, the log line) is already in place.
 
-# Step 6: Dial Temporal through `tsnet`
+## Step 6: Dial Temporal through `tsnet`
 
 The `tsnet.Server` you just configured gives your Worker its own node on the `tailnet`. Now you need to tell the Temporal Go SDK to use it, so the gRPC connection to `temporal-dev:7233` flows through `tsnet` instead of the system network stack.
 
@@ -166,7 +168,7 @@ grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) 
 
 Every byte the SDK sends now flows through `tsNode.Dial`, which routes over the `tailnet`.
 
-# Step 7: Start the Go Worker
+## Step 7: Start the Go Worker
 
 With both TODOs filled in, the Worker is ready to join the `tailnet` and connect to Temporal on its own.
 
@@ -185,7 +187,7 @@ connected to temporal at temporal-dev:7233 via tsnet
 Starting Go worker on task queue: YOUR-USER-ID-hello-tsnet
 ```
 
-# Step 8: Confirm the Go Worker is on the `tailnet`
+## Step 8: Confirm the Go Worker is on the `tailnet`
 
 The Go Worker should now appear as its own node on the `tailnet`, even with the system Tailscale client still offline from Step 4. To verify from the command line, bring the system client back up and check `tailscale status`.
 
@@ -198,7 +200,7 @@ tailscale status | grep -- '-ex2-go-worker'
 
 You should see a new row, `<your-user-id>-ex2-go-worker-<suffix>`, separate from the Exercise Environment itself. The Worker joined the `tailnet` on its own via `tsnet` while the system client was offline. That's the whole point of Step 4.
 
-# Step 9: Run the Workflow
+## Step 9: Run the Workflow
 
 Now trigger the same geo-IP Workflow from Exercise 1. This time the activities execute on the Go `tsnet` Worker you just started.
 
@@ -211,7 +213,7 @@ go run . starter
 
 You should see your public IP address and location printed, same as Exercise 1, but this time the Worker that executed the activities was the Go `tsnet` Worker, not the Python Worker from Exercise 1.
 
-# Step 10: Check the Temporal UI
+## Step 10: Check the Temporal UI
 
 Click the [button label="Temporal UI" background="#444CE7"](tab-3) tab and find your `<your-user-id>-hello-tsnet` Workflow. Click into it and look at the worker info on each activity. The task queue is `<your-user-id>-hello-tsnet`, and the worker identity reflects the Go process rather than the Python one from Exercise 1.
 
@@ -221,7 +223,7 @@ Click the [button label="Temporal UI" background="#444CE7"](tab-3) tab and find 
 
 Same Temporal Server, same Workflow, different Worker transport. The Python Worker in Exercise 1 relied on the Exercise Environment's Tailscale client to reach Temporal. The Go Worker you just ran carries its own `tsnet` node inside the process itself, joins the `tailnet` on startup, and dials Temporal through that embedded node.
 
-# Wrapping Up
+## Wrapping Up
 
 In this exercise you:
 

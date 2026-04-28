@@ -44,9 +44,11 @@ timelimit: 1500
 enhanced_loading: null
 ---
 
+# Exercise 3: Python Weather Agent
+
 Build a durable AI agent that chains tool calls, with all LLM requests secured through Aperture on the `tailnet`.
 
-# Background
+## Background
 
 This exercise has two phases.
 
@@ -61,7 +63,7 @@ This exercise has two phases.
 
 Every LLM call goes through **Aperture** instead of directly to OpenAI. Aperture holds the shared API key, identifies you by your Tailscale identity, and enforces rate limits. The same pattern applies in Exercise 4 with Anthropic's Claude.
 
-# Environment
+## Environment
 
 All code for this exercise lives in `exercises/03_weather_agent/`. Inside that directory:
 
@@ -80,7 +82,7 @@ All code for this exercise lives in `exercises/03_weather_agent/`. Inside that d
 > tailscale up --auth-key="$TS_AUTHKEY" --hostname="${WORKSHOP_USER_ID}-env"
 > ```
 
-# Step 1: Route LLM calls through Aperture
+## Step 1: Route LLM calls through Aperture
 
 This step begins **Phase A: Tool-Calling**. The change is small but load-bearing. Instead of pointing the OpenAI client at `api.openai.com`, you point it at Aperture, the `tailnet`-only gateway that attaches your Tailscale identity, enforces rate limits, and swaps in the real API key server-side.
 
@@ -98,7 +100,7 @@ client = AsyncOpenAI(
 
 `APERTURE_URL` is already exported in your environment. The OpenAI client will now send requests to Aperture, which forwards them to OpenAI with the shared API key after attaching your Tailscale identity.
 
-# Step 2: Start the Phase A Worker
+## Step 2: Start the Phase A Worker
 
 Now start the Worker. This is the process that executes the Workflow and its tool activities.
 
@@ -111,7 +113,7 @@ uv run worker.py
 
 You should see the Worker connect to Temporal and start listening on its task queue.
 
-# Step 3: Run the Phase A Workflow
+## Step 3: Run the Phase A Workflow
 
 With the Worker running, trigger the Workflow from the [button label="Starter" background="#444CE7"](tab-2) terminal.
 
@@ -128,7 +130,7 @@ You should see the LLM call the weather tool and return results. Click the [butt
 
 Your Worker executed a Workflow where the LLM chose to call a tool instead of answering directly. The LLM call itself flowed through Aperture, which authenticated you by your Tailscale identity and forwarded the request to OpenAI with the shared API key. Your code never touched an OpenAI API key.
 
-# Step 4: Enable the agentic loop
+## Step 4: Enable the agentic loop
 
 This step begins **Phase B: Agentic Loop**. The difference from Phase A is that the Workflow now keeps handing the LLM tool results until the LLM decides it has enough information to answer, instead of stopping after one tool call.
 
@@ -140,7 +142,7 @@ while True:
 
 This turns the single-shot tool call from Phase A into a loop that repeatedly calls the LLM, executes whichever tool the LLM picked, feeds the result back, and stops only when the LLM decides it's done.
 
-# Step 5: Execute the chosen activity dynamically
+## Step 5: Execute the chosen activity dynamically
 
 Still in `agent_workflow.py`, find **TODO 3** and replace the empty string with `item.name`:
 
@@ -154,7 +156,7 @@ tool_result = await workflow.execute_activity(
 
 `item.name` is whichever tool the LLM picked on this iteration, such as `get_ip_address`, `get_location_info`, or `get_weather_alerts`. Temporal runs it as a dynamic activity, so the Worker does not hard-code which tool to call; Temporal dispatches by name.
 
-# Step 6: Restart the Worker as the agent Worker
+## Step 6: Restart the Worker as the agent Worker
 
 The Phase A Worker registered the single-shot tool-calling Workflow. For Phase B you need the agent Workflow registered, which means restarting the Worker with the `--agent` flag.
 
@@ -166,7 +168,7 @@ uv run worker.py --agent
 
 You should see the Worker reconnect to Temporal and start listening on its task queue, this time with the agent Workflow registered.
 
-# Step 7: Run the agentic Workflow
+## Step 7: Run the agentic Workflow
 
 Now ask the agent a question that requires multiple tool calls to answer.
 
@@ -182,7 +184,7 @@ Watch the Worker logs. The LLM chains through multiple tools before responding: 
 
 The LLM made autonomous decisions about which tool to call next, and Temporal recorded every call, input, and output in the Workflow history. If the process had crashed halfway through, Temporal could replay the history on a new Worker and the agent would resume from exactly where it left off, even partway through a multi-tool reasoning chain.
 
-# Step 8: Explore the Aperture UI
+## Step 8: Explore the Aperture UI
 
 Open the [button label="Aperture UI" background="#444CE7"](tab-4) tab to see every LLM call your Workers made.
 
@@ -196,7 +198,7 @@ Click the **Adoption** tab for a cost and token-usage breakdown across models an
 
 > **Note:** Every Instruqt machine authenticated using the same `tag:infra`, so the Dashboard and Logs show requests from all attendees, not just yours. In a real deployment, Aperture attributes usage per user via their Tailscale identity from your IDP. Agentic workloads should have their own tags too -- both so Aperture tracks them separately from human users and because zero-trust ACLs depend on a well-defined tag taxonomy to enforce least-privilege access. The workshop `tailnet` has fully open ACLs for simplicity; in production you would give each user and each agent only the access they need.
 
-# Wrapping Up
+## Wrapping Up
 
 In this exercise you:
 
