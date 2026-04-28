@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"math/rand/v2"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -72,10 +74,14 @@ func runWorker(logger *slog.Logger, userID, taskQueue string) {
 
 	pingCtx, pingCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer pingCancel()
-	if sample, err := acts.FetchMetrics(pingCtx); err != nil {
-		logger.Warn("metrics endpoint unreachable", "url", metricsURL, "err", err)
-	} else {
-		logger.Info("metrics reachable", "url", metricsURL, "sample", strings.SplitN(sample, "\n", 2)[0])
+	if req, err := http.NewRequestWithContext(pingCtx, http.MethodGet, metricsURL, nil); err == nil {
+		if resp, err := acts.HTTP.Do(req); err != nil {
+			logger.Warn("metrics endpoint unreachable", "url", metricsURL, "err", err)
+		} else {
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+			resp.Body.Close()
+			logger.Info("metrics reachable", "url", metricsURL, "sample", strings.SplitN(string(body), "\n", 2)[0])
+		}
 	}
 
 	w := worker.New(c, taskQueue, worker.Options{})
@@ -167,6 +173,7 @@ func dialTemporal(logger *slog.Logger, tsNode *tsnet.Server) client.Client {
 		HostPort: "passthrough:///" + temporalHost,
 		Logger:   logger,
 		ConnectionOptions: client.ConnectionOptions{
+			GetSystemInfoTimeout: 30 * time.Second,
 			DialOptions: []grpc.DialOption{
 				grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 					host, _, _ := net.SplitHostPort(addr)
