@@ -142,7 +142,10 @@ flowchart LR
 - **Mesh VPN** built on WireGuard - every device connects directly
 - **Zero config** - no firewall rules, no port forwarding, no VPN concentrators
 - **Identity-based** - every connection knows who's on the other end
-- **Tailnet** - your private network of devices
+- **Tailnet** - an interconnected collection of users, devices and resources, a term for a Tailscale network
+<br> 
+
+  [Glossary of Tailscale Terms](https://tailscale.com/docs/reference/glossary)
 
 </v-clicks>
 
@@ -517,8 +520,8 @@ tailscale down
 
 <v-clicks>
 
-- **`--auth-key`** - non-interactive auth, suited for machine identity. Without it, `up` opens a browser for SSO assuming you are a human user registering/connecting your device (like a laptop or phone).
-- **`--hostname`** - what this node shows up as in `tailscale status` and `whois`. Uniqueness matters on a shared tailnet.
+- **`--auth-key`** - non-interactive auth, suited for machine identity. Without it, `up` opens a browser for SSO assuming you are a human user.
+- **`--hostname`** - what this node shows up as in `tailscale status` and how it is uniquely addressible via [MagicDNS](https://tailscale.com/kb/1081/magicdns) on the tailnet.
 - **`tailscale down`** - disconnect from the tailnet. The node stays registered; a future `up` reuses its identity.
 
 </v-clicks>
@@ -617,7 +620,7 @@ Explore the tailnet from the CLI, then fill in the two TODOs in `main.go` so the
 
 # What Just Happened in Exercise 2
 
-```mermaid {scale: 0.55}
+```mermaid {scale: 0.54}
 flowchart LR
   subgraph GCP["GCP: Your Exercise Environment"]
     direction TB
