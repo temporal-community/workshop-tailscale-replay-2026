@@ -36,7 +36,7 @@ import TailscaleLogo from '../components/TailscaleLogo.vue'
 }
 .end-content {
   align-self: flex-start;
-  max-width: 28ch;
+  max-width: 22ch;
 }
 .end :deep(h1) {
   font-size: 3.2rem;

@@ -7,7 +7,7 @@ info: |
   Tailscale networking and Aperture API gateway, powered by Temporal.
 author: Mason Egger & Kartik Bharath
 keywords: temporal,tailscale,aperture,ai,agents
-colorSchema: dark
+colorSchema: light
 fonts:
   sans: 'Inter'
   mono: 'Noto Sans Mono'
@@ -31,10 +31,12 @@ that's secured end-to-end by Tailscale networking.
 -->
 
 ---
-layout: two-cols
+layout: two-cols-header
 ---
 
 # About Us
+
+::left::
 
 ### Mason Egger
 Senior Solutions Architect, **Temporal**
@@ -47,12 +49,12 @@ PSF Fellow. President of the PyTexas Foundation.
 
 ::right::
 
-<br><br>
-
 ### Kartik Bharath
-*[Title]*, **Tailscale**
+Solutions Engineer, **Tailscale**
 
-*[Kartik bio]*
+"Computers should go brrr. If they don't, I
+enjoy figuring out why and how we can collectively
+share knowledge to make them go brrr better."
 
 <!--
 Quick intros. We'll keep it brief since we have a lot to build today.
@@ -159,7 +161,7 @@ layout: section
 # It's too easy to put private things on the public internet.
 
 ---
-layout: two-cols
+layout: two-cols-figure
 ---
 
 # So you hide it behind a VPN
@@ -177,7 +179,7 @@ layout: two-cols
 
 ::right::
 
-<img src="./assets/tailscale/vpn-hub-pain.png" alt="Traditional VPN hub with gateways, approved users, and unapproved users" class="tailscale-figure" />
+<img src="./assets/tailscale/vpn-hub-pain.svg" alt="Traditional VPN hub with gateways, approved users, and unapproved users" class="tailscale-figure" />
 
 ---
 
@@ -199,7 +201,7 @@ Tailscale brings identity and **WireGuard** all the way down to **Layer 3 — th
 </v-clicks>
 
 ---
-layout: two-cols
+layout: two-cols-figure
 ---
 
 # Everything connects on one network
@@ -216,7 +218,7 @@ Once devices join the tailnet, nodes reach each other directly over encrypted Wi
 
 ::right::
 
-<img src="./assets/tailscale/identity-layer3-mesh.png" alt="Identity provider authenticating into a Layer-3 mesh network of devices" class="tailscale-figure" />
+<img src="./assets/tailscale/identity-layer3-mesh.svg" alt="Identity provider authenticating into a Layer-3 mesh network of devices" class="tailscale-figure" />
 
 ---
 
@@ -225,7 +227,7 @@ Once devices join the tailnet, nodes reach each other directly over encrypted Wi
 <v-clicks>
 
 - **API gateway** that sits between your code and external APIs
-- **Shared key management** - one OpenAI key, many users, nobody sees the key
+- **Shared key management** - one key per LLM provider, many users, nobody sees the key 
 - **Identity-aware** - uses your Tailscale identity, no extra auth tokens
 - **Rate limiting** - per-user quotas so no one burns the whole budget
 
@@ -240,7 +242,7 @@ Your LLM calls go to Aperture's endpoint instead of `api.openai.com`. Aperture f
 </v-click>
 
 ---
-layout: two-cols
+layout: two-cols-figure
 ---
 
 # Aperture by Tailscale
@@ -257,7 +259,7 @@ A **centralized gateway** for your AI tools. No API keys in developer hands.
 
 ::right::
 
-<img src="./assets/tailscale/aperture-architecture.png" alt="Aperture sitting between users, agents, and LLM APIs" class="tailscale-figure" />
+<img src="./assets/tailscale/aperture-architecture.svg" alt="Aperture sitting between users, agents, and LLM APIs" class="tailscale-figure" />
 
 ---
 
@@ -515,9 +517,9 @@ tailscale down
 
 <v-clicks>
 
-- **`--auth-key`** - non-interactive auth. Without it, `up` opens a browser for SSO.
+- **`--auth-key`** - non-interactive auth, suited for machine identity. Without it, `up` opens a browser for SSO assuming you are a human user registering/connecting your device (like a laptop or phone).
 - **`--hostname`** - what this node shows up as in `tailscale status` and `whois`. Uniqueness matters on a shared tailnet.
-- **`tailscale down`** - leaves the tailnet. The node stays registered; a future `up` reuses its identity.
+- **`tailscale down`** - disconnect from the tailnet. The node stays registered; a future `up` reuses its identity.
 
 </v-clicks>
 
@@ -1130,4 +1132,4 @@ layout: end
 
 **Mason Egger**, mason.egger@temporal.io
 
-**Kartik Bharath**, *[email]*
+**Kartik Bharath**, kartik@tailscale.com

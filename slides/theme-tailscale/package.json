@@ -18,7 +18,7 @@
         "italic": false
       }
     },
-    "colorSchema": "light",
+    "colorSchema": "both",
     "highlighter": "shiki"
   }
 }
