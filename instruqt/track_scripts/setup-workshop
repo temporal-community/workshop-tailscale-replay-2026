@@ -1,0 +1,62 @@
+#!/bin/bash
+set -euxo pipefail
+
+# ============================================================
+# Track Setup: Pre-warm the Go module + build cache for ex2 tsnet.
+#
+# Runs during hot-start pool prewarm, before invite association.
+# Runtime parameters (TS_AUTHKEY, INSTRUQT_USER_NAME, etc.) are
+# NOT available here, so this script is scoped to work that
+# needs only the network and disk.
+#
+# Challenge 1's setup-workshop runs the same warmup at the end
+# as a fallback for cold-start cases (empty pool). When this
+# script ran first, ex1's `go mod download` / `go build` are
+# no-ops because $GOCACHE / $GOMODCACHE are already populated.
+# ============================================================
+
+# Wait for Instruqt host bootstrap before touching the system.
+until [ -f /opt/instruqt/bootstrap/host-bootstrap-completed ]; do
+    sleep 1
+done
+
+REPO_URL="https://github.com/temporal-community/workshop-tailscale-replay-2026.git"
+WORKSHOP_DIR="/root/workshop"
+
+# --- Install Go ---
+# tar -xzf overwrites in place, so ex1 setup re-extracting the
+# same archive into /usr/local is idempotent.
+
+GO_VERSION="1.26.2"
+curl -LsSf "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar -C /usr/local -xzf -
+export PATH="/usr/local/go/bin:$PATH"
+
+# --- Sparse-clone the workshop repo with ex2 included ---
+# Same target directory as ex1 setup; ex1's `if [ ! -d ... ]`
+# guard skips re-cloning when this script already populated it.
+# Ex1 setup later resets the sparse-checkout to ex1-only at the
+# end of its run, so the attendee's Code Editor tree stays clean.
+
+if [ ! -d "$WORKSHOP_DIR" ]; then
+    git clone --no-checkout "$REPO_URL" "$WORKSHOP_DIR"
+    cd "$WORKSHOP_DIR"
+    git sparse-checkout set --no-cone \
+        '/pyproject.toml' \
+        '/uv.lock' \
+        '/temporal.toml' \
+        '/exercises/02_explore_tailscale/**'
+    git checkout
+fi
+
+# --- Warm Go module + build cache for ex2 tsnet ---
+# tsnet pulls in ~160 transitive Go modules. Compiling them cold
+# on n1-standard-2 takes 3-5 minutes. $GOCACHE / $GOMODCACHE
+# persist from this prewarm into the participant's challenge
+# session (same VM under hot start), so the attendee's first
+# `go run` in ex2 is instant.
+
+cd "$WORKSHOP_DIR/exercises/02_explore_tailscale/go-hello-tsnet/solution"
+go mod download
+go build -o /dev/null .
+
+echo "==> Track-level prewarm complete."

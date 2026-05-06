@@ -41,9 +41,7 @@ layout: two-cols-header
 ### Mason Egger
 Senior Solutions Architect, **Temporal**
 
-"On my business card I am a Solutions Architect. In
-my mind I am a programmer. But in my heart I am a
-teacher."
+"I used to be an SRE, then I realized no one pages you when the docs site is down. That's how I got here."
 
 PSF Fellow. President of the PyTexas Foundation.
 
@@ -408,6 +406,40 @@ temporal ts-net
 ---
 
 # Workshop Environment
+
+<div class="access-cta">
+  <div class="access-cta-label">Access your Exercise Environment</div>
+  <a href="https://t.mp/replay26-tailscale">t.mp/replay26-tailscale</a>
+</div>
+
+<style>
+.access-cta {
+  text-align: center;
+  margin: 3rem auto;
+  padding: 2rem 2.5rem;
+  border: 3px solid #1a1a1a;
+  border-radius: 0.75rem;
+  background: #f4f4f4;
+  max-width: 90%;
+}
+.access-cta-label {
+  font-size: 1.5rem;
+  color: #555;
+  margin-bottom: 0.8rem;
+  letter-spacing: 0.02em;
+}
+.access-cta a {
+  font-size: 4.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-decoration: none;
+  font-family: 'Noto Sans Mono', monospace;
+}
+</style>
+
+---
+
+# Environment Variables
 
 Your Exercise Environment already has these exported for you.
 
